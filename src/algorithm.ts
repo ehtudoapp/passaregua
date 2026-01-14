@@ -1,4 +1,5 @@
 import type { Balance, Expense, Transaction } from './types';
+import { EPSILON } from './constants';
 
 /**
  * Algoritmo de simplificação de dívidas
@@ -29,8 +30,11 @@ export function calculateBalances(expenses: Expense[], people: string[]): Balanc
     return balances;
   }
 
-  // Calcula o total de despesas
-  const totalExpenses = expenses.reduce((sum, exp) => sum + exp.amount, 0);
+  // Filtra despesas de pessoas que não estão mais na lista
+  const validExpenses = expenses.filter(exp => people.includes(exp.payer));
+
+  // Calcula o total de despesas válidas
+  const totalExpenses = validExpenses.reduce((sum, exp) => sum + exp.amount, 0);
 
   // Calcula quanto cada pessoa deveria pagar (divisão igual)
   const perPersonShare = totalExpenses / people.length;
@@ -41,7 +45,7 @@ export function calculateBalances(expenses: Expense[], people: string[]): Balanc
     paidByPerson[name] = 0;
   });
 
-  expenses.forEach(exp => {
+  validExpenses.forEach(exp => {
     paidByPerson[exp.payer] = (paidByPerson[exp.payer] || 0) + exp.amount;
   });
 
@@ -67,9 +71,6 @@ export function calculateMinimumTransactions(balances: Balance[]): Transaction[]
 
   // Array para armazenar as transações
   const transactions: Transaction[] = [];
-
-  // Tolerância para erros de ponto flutuante
-  const EPSILON = 0.01;
 
   // Continua até que todos os saldos sejam zero (ou muito próximos de zero)
   while (true) {

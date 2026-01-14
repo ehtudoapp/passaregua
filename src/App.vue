@@ -2,6 +2,7 @@
 import { ref, computed } from 'vue';
 import type { Expense } from './types';
 import { calculateBalances, calculateMinimumTransactions } from './algorithm';
+import { EPSILON } from './constants';
 
 // Estado da aplicação
 const people = ref<string[]>([]);
@@ -43,9 +44,11 @@ function removePerson(index: number) {
   // Verifica se há despesas dessa pessoa
   const hasExpenses = expenses.value.some(exp => exp.payer === personToRemove);
   if (hasExpenses) {
-    if (!confirm(`${personToRemove} tem despesas registradas. Deseja remover mesmo assim? As despesas serão mantidas.`)) {
+    if (!confirm(`${personToRemove} tem despesas registradas. Remover esta pessoa também removerá suas despesas. Deseja continuar?`)) {
       return;
     }
+    // Remove todas as despesas da pessoa
+    expenses.value = expenses.value.filter(exp => exp.payer !== personToRemove);
   }
   
   people.value.splice(index, 1);
@@ -92,14 +95,12 @@ function calculateSettlement() {
 }
 
 function getBalanceClass(balance: number): string {
-  const EPSILON = 0.01;
   if (balance > EPSILON) return 'creditor';
   if (balance < -EPSILON) return 'debtor';
   return 'neutral';
 }
 
 function formatBalance(balance: number): string {
-  const EPSILON = 0.01;
   if (balance > EPSILON) return `+R$ ${balance.toFixed(2)}`;
   if (balance < -EPSILON) return `R$ ${balance.toFixed(2)}`;
   return 'R$ 0.00';

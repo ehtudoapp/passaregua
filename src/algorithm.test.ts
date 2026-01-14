@@ -51,6 +51,23 @@ describe('calculateBalances', () => {
 
     expect(balances).toHaveLength(0);
   });
+
+  it('deve ignorar despesas de pessoas que não estão na lista', () => {
+    const expenses: Expense[] = [
+      { payer: 'Alice', amount: 100 },
+      { payer: 'Dave', amount: 50 } // Dave não está na lista de pessoas
+    ];
+    const people = ['Alice', 'Bob', 'Carol'];
+
+    const balances = calculateBalances(expenses, people);
+
+    // Total considerado deve ser apenas 100 (de Alice, Dave é ignorado)
+    // Cada pessoa deveria pagar 100/3 = 33.33
+    expect(balances).toHaveLength(3);
+    expect(Math.abs(balances[0].balance - 66.67)).toBeLessThan(0.01); // 100 - 33.33 ≈ 66.67
+    expect(Math.abs(balances[1].balance - (-33.33))).toBeLessThan(0.01); // 0 - 33.33 ≈ -33.33
+    expect(Math.abs(balances[2].balance - (-33.33))).toBeLessThan(0.01); // 0 - 33.33 ≈ -33.33
+  });
 });
 
 describe('calculateMinimumTransactions', () => {
