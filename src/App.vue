@@ -162,7 +162,7 @@ function formatBalance(balance: number): string {
             <span class="font-medium text-gray-900 text-sm">{{ person }}</span>
             <button
               @click="removePerson(index)"
-              class="px-3 py-1 bg-red-500 text-white text-xs font-medium rounded hover:bg-red-600 transition"
+                class="px-3 py-1 bg-rose-400 text-white text-xs font-medium rounded hover:bg-rose-600 transition"
             >
               Remover
             </button>
@@ -221,7 +221,7 @@ function formatBalance(balance: number): string {
               </span>
               <button
                 @click="removeExpense(index)"
-                class="px-3 py-1 bg-red-500 text-white text-xs font-medium rounded hover:bg-red-600 transition"
+                class="px-3 py-1 bg-rose-400 text-white text-xs font-medium rounded hover:bg-rose-600 transition"
               >
                 Remover
               </button>
@@ -257,7 +257,7 @@ function formatBalance(balance: number): string {
               :class="[
                 'px-4 py-3 rounded-lg font-medium text-sm',
                 getBalanceClass(balance.balance) === 'creditor' && 'bg-emerald-100 text-emerald-900',
-                getBalanceClass(balance.balance) === 'debtor' && 'bg-red-100 text-red-900',
+                getBalanceClass(balance.balance) === 'debtor' && 'bg-rose-100 text-rose-900',
                 getBalanceClass(balance.balance) === 'neutral' && 'bg-gray-100 text-gray-600'
               ]"
             >
@@ -278,15 +278,15 @@ function formatBalance(balance: number): string {
             <div
               v-for="(transaction, index) in transactions"
               :key="index"
-              class="bg-blue-50 px-4 py-3 rounded-lg border border-blue-200 text-sm"
+              class="bg-sky-50 px-4 py-3 rounded-lg border border-sky-200 text-sm"
             >
               <div class="flex items-center gap-2 mb-1">
-                <span class="font-bold text-blue-700">{{ index + 1 }}.</span>
+                <span class="font-bold text-sky-700">{{ index + 1 }}.</span>
                 <span class="font-semibold text-gray-900">{{ transaction.from }}</span>
                 <span class="text-gray-500">→</span>
                 <span class="font-semibold text-gray-900">{{ transaction.to }}</span>
               </div>
-              <div class="text-right font-bold text-blue-700">
+              <div class="text-right font-bold text-sky-700">
                 R$ {{ transaction.amount.toFixed(2) }}
               </div>
             </div>

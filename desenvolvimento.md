@@ -14,7 +14,7 @@
 | Primária (clara)  | `emerald-300`  | `#6ee7b7` |
 | Texto principal   | `gray-900`     | `#111827` |
 | Texto secundário  | `gray-500`     | `#6b7280` |
-| Erro / Negativo   | `rose-500`     | `#f43f5e` |
+| Erro / Negativo   | `rose-400`     | `#ff637e` |
 | Info / Link       | `sky-500`      | `#0ea5e9` |
 | Alerta            | `yellow-500`   | `#eab308` |
 
