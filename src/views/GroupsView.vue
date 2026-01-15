@@ -15,7 +15,10 @@ import AppNavbar from '../components/AppNavbar.vue';
 import {
   createGroup,
   getGroupsWithMemberCount,
-  type GroupWithCount
+  type GroupWithCount,
+  getActiveGroupId,
+  setActiveGroupId,
+  updateGroupName
 } from '../lib/storage';
 
 // Props and emits for navigation
@@ -37,12 +40,20 @@ const memberInputs = ref<{ id: number; name: string; error?: string }[]>([
 const nextMemberId = ref(2);
 
 const groups = ref<GroupWithCount[]>([]);
+const activeGroupId = ref<string | null>(null);
+
+// Edit drawer state
+const editDrawerOpen = ref(false);
+const editingGroup = ref<GroupWithCount | null>(null);
+const editGroupName = ref('');
+const editGroupNameError = ref('');
 
 // Load groups on mount
 loadGroups();
 
 function loadGroups() {
   groups.value = getGroupsWithMemberCount();
+  activeGroupId.value = getActiveGroupId();
 }
 
 function openDrawer() {
@@ -124,12 +135,49 @@ function handleCreateGroup() {
   loadGroups();
   closeDrawer();
 }
+
+function openEditDrawer(group: GroupWithCount) {
+  editingGroup.value = group;
+  editGroupName.value = group.nome;
+  editGroupNameError.value = '';
+  editDrawerOpen.value = true;
+}
+
+function closeEditDrawer() {
+  editDrawerOpen.value = false;
+  editingGroup.value = null;
+  editGroupName.value = '';
+  editGroupNameError.value = '';
+}
+
+function validateEditGroupName(): boolean {
+  if (!editGroupName.value.trim()) {
+    editGroupNameError.value = 'Nome do grupo não pode ser vazio';
+    return false;
+  }
+  editGroupNameError.value = '';
+  return true;
+}
+
+function handleSaveGroupName() {
+  if (!validateEditGroupName() || !editingGroup.value) {
+    return;
+  }
+  
+  try {
+    updateGroupName(editingGroup.value.id, editGroupName.value.trim());
+    loadGroups();
+    closeEditDrawer();
+  } catch (error) {
+    editGroupNameError.value = error instanceof Error ? error.message : 'Erro ao atualizar grupo';
+  }
+}
 </script>
 
 <template>
   <div class="min-h-screen flex flex-col bg-gray-50">
     <!-- Header -->
-    <AppHeader title="Grupos" />
+    <AppHeader title="Passa a régua" />
 
     <!-- Main Content -->
     <main class="flex-1 px-4 py-6 pb-24">
@@ -146,7 +194,7 @@ function handleCreateGroup() {
 
         <!-- Groups List -->
         <div class="space-y-4">
-          <h2 class="text-xl font-semibold text-gray-900">Listar Grupos</h2>
+          <h2 class="text-xl font-semibold text-gray-900">Grupos</h2>
           
           <div v-if="groups.length === 0" class="text-center py-12 text-gray-500">
             <UserGroupIcon class="w-16 h-16 mx-auto mb-4 text-gray-300" />
@@ -158,7 +206,11 @@ function handleCreateGroup() {
             <div
               v-for="group in groups"
               :key="group.id"
-              class="bg-white rounded-lg border-2 border-gray-200 p-4 hover:border-emerald-500 transition"
+              :class="[
+                'bg-white rounded-lg border-2 p-4 hover:border-emerald-500 transition cursor-pointer',
+                activeGroupId === group.id ? 'border-emerald-500' : 'border-gray-200'
+              ]"
+              @click="openEditDrawer(group)"
             >
               <div class="flex items-start justify-between">
                 <div class="flex-1">
@@ -167,7 +219,7 @@ function handleCreateGroup() {
                   </h3>
                   <p class="text-sm text-gray-600 flex items-center gap-1">
                     <UserGroupIcon class="w-4 h-4" />
-                    <span>{{ group.memberCount }} {{ group.memberCount === 1 ? 'membro' : 'membros' }}</span>
+                    <span>{{ group.memberCount }} {{ group.memberCount === 1 ? 'participante' : 'participantes' }}</span>
                   </p>
                 </div>
               </div>
@@ -257,6 +309,64 @@ function handleCreateGroup() {
           @click="handleCreateGroup"
         >
           Criar Grupo
+        </Button>
+      </div>
+    </div>
+  </Drawer>
+
+  <!-- Drawer for Editing Group Name -->
+  <Drawer v-model="editDrawerOpen" position="right" width-class="w-full max-w-xl">
+    <template #header="{ close }">
+      <div class="flex items-center justify-between px-6 py-4">
+        <h2 class="text-xl font-semibold text-gray-900">Editar Grupo</h2>
+        <Button variant="icon" @click="close">
+          <XMarkIcon class="w-6 h-6" />
+        </Button>
+      </div>
+    </template>
+
+    <div class="px-6 py-4 space-y-6">
+      <!-- Edit Group Name Section -->
+      <div class="border-b border-gray-200 pb-6">
+        <h3 class="text-lg font-semibold text-gray-900 mb-4">Editar Nome do Grupo</h3>
+        <div class="space-y-4">
+          <Input
+            v-model="editGroupName"
+            label="Nome do Grupo"
+            placeholder="Ex: Viagem à praia"
+            :error="editGroupNameError"
+            @blur="validateEditGroupName"
+          />
+        </div>
+      </div>
+
+      <!-- Activate Group Section -->
+      <div class="pb-6">
+        <h3 class="text-lg font-semibold text-gray-900 mb-4">Ativar Grupo</h3>
+        <p class="text-sm text-gray-600 mb-3">
+          {{ activeGroupId === editingGroup?.id ? 'Este é o grupo ativo' : 'Clique abaixo para ativar este grupo' }}
+        </p>
+        <Button
+          v-if="activeGroupId !== editingGroup?.id"
+          variant="primary"
+          class="w-full"
+          @click="editingGroup && setActiveGroupId(editingGroup.id); loadGroups()"
+        >
+          Ativar Grupo
+        </Button>
+        <div v-else class="w-full px-4 py-2 bg-emerald-50 border border-emerald-200 rounded-lg text-emerald-700 text-sm text-center">
+          ✓ Grupo ativo
+        </div>
+      </div>
+
+      <!-- Save Button -->
+      <div class="sticky bottom-0 bg-white pt-4 border-t border-gray-200">
+        <Button
+          variant="primary"
+          class="w-full"
+          @click="handleSaveGroupName"
+        >
+          Salvar Alterações
         </Button>
       </div>
     </div>

@@ -23,6 +23,7 @@ export interface Transaction {
 export type UUID = string;
 export type ISODateString = string; // ex: 2026-01-14T12:34:56.789Z
 export type Cents = number; // valores em centavos
+export type ActiveGroupId = UUID | null;
 
 export interface Group {
   id: UUID;

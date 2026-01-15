@@ -10,7 +10,10 @@ import {
   addMemberToGroup,
   getGroupMembers,
   removeMember,
-  getGroupsWithMemberCount
+  getGroupsWithMemberCount,
+  getActiveGroupId,
+  setActiveGroupId,
+  updateGroupName
 } from './storage';
 
 // Mock localStorage
@@ -163,6 +166,88 @@ describe('Storage', () => {
         memberCount: 1
       });
       expect(groupsWithCount[2].memberCount).toBe(0);
+    });
+  });
+
+  describe('Active group operations', () => {
+    it('should get null when no active group is set', () => {
+      const activeId = getActiveGroupId();
+      expect(activeId).toBeNull();
+    });
+
+    it('should set and get active group', () => {
+      const group = createGroup({ nome: 'Active Group' });
+      setActiveGroupId(group.id);
+      
+      const activeId = getActiveGroupId();
+      expect(activeId).toBe(group.id);
+    });
+
+    it('should set active group to null', () => {
+      const group = createGroup({ nome: 'Group' });
+      setActiveGroupId(group.id);
+      setActiveGroupId(null);
+      
+      const activeId = getActiveGroupId();
+      expect(activeId).toBeNull();
+    });
+
+    it('should throw error when setting non-existent group as active', () => {
+      expect(() => {
+        setActiveGroupId('non-existent-id' as any);
+      }).toThrow();
+    });
+
+    it('should activate next group when removing active group', () => {
+      const group1 = createGroup({ nome: 'Group 1' });
+      const group2 = createGroup({ nome: 'Group 2' });
+      
+      setActiveGroupId(group1.id);
+      removeGroup(group1.id);
+      
+      const activeId = getActiveGroupId();
+      expect(activeId).toBe(group2.id);
+    });
+
+    it('should set active group to null when removing only group', () => {
+      const group = createGroup({ nome: 'Only Group' });
+      setActiveGroupId(group.id);
+      removeGroup(group.id);
+      
+      const activeId = getActiveGroupId();
+      expect(activeId).toBeNull();
+    });
+  });
+
+  describe('Update group name', () => {
+    it('should update group name', () => {
+      const group = createGroup({ nome: 'Old Name' });
+      const updated = updateGroupName(group.id, 'New Name');
+      
+      expect(updated?.nome).toBe('New Name');
+    });
+
+    it('should trim whitespace from group name', () => {
+      const group = createGroup({ nome: 'Original' });
+      const updated = updateGroupName(group.id, '  Trimmed Name  ');
+      
+      expect(updated?.nome).toBe('Trimmed Name');
+    });
+
+    it('should throw error when updating to empty name', () => {
+      const group = createGroup({ nome: 'Group' });
+      
+      expect(() => {
+        updateGroupName(group.id, '   ');
+      }).toThrow('Nome do grupo não pode ser vazio');
+    });
+
+    it('should throw error when updating to empty string', () => {
+      const group = createGroup({ nome: 'Group' });
+      
+      expect(() => {
+        updateGroupName(group.id, '');
+      }).toThrow('Nome do grupo não pode ser vazio');
     });
   });
 });
