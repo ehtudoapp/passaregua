@@ -7,6 +7,7 @@ export const membersStorage: StorageAPI<Member> = createStorage<Member>('members
 
 // Active group storage
 const ACTIVE_GROUP_KEY = 'pr:activeGroupId';
+const CURRENT_USERNAME_KEY = 'pr:currentUsername';
 
 function getStorage(): Storage | null {
   if (typeof globalThis !== 'undefined' && 'localStorage' in globalThis) {
@@ -152,4 +153,32 @@ export function getGroupsWithMemberCount(): GroupWithCount[] {
     ...group,
     memberCount: getGroupMembers(group.id).length
   }));
+}
+
+// Current user storage
+export function getCurrentUsername(): string | null {
+  try {
+    const storage = getStorage();
+    if (storage) {
+      return storage.getItem(CURRENT_USERNAME_KEY);
+    }
+  } catch (e) {
+    // Handle cases where localStorage might not be available
+  }
+  return null;
+}
+
+export function setCurrentUsername(username: string | null): void {
+  try {
+    const storage = getStorage();
+    if (storage) {
+      if (username === null || username.trim() === '') {
+        storage.removeItem(CURRENT_USERNAME_KEY);
+      } else {
+        storage.setItem(CURRENT_USERNAME_KEY, username.trim());
+      }
+    }
+  } catch (e) {
+    // Handle cases where localStorage might not be available
+  }
 }
