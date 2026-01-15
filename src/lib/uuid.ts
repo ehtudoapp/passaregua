@@ -15,8 +15,15 @@ export function generateUUID(): string {
     crypto.getRandomValues(bytes);
     
     // Set version (4) and variant bits according to RFC 4122
-    bytes[6] = (bytes[6] & 0x0f) | 0x40; // Version 4
-    bytes[8] = (bytes[8] & 0x3f) | 0x80; // Variant 10
+    // Version 4: bits 12-15 of time_hi_and_version field = 0100
+    const VERSION_4_MASK = 0x0f; // Clear version bits
+    const VERSION_4_VALUE = 0x40; // Set version to 4
+    bytes[6] = (bytes[6] & VERSION_4_MASK) | VERSION_4_VALUE;
+    
+    // Variant: bits 6-7 of clock_seq_hi_and_reserved field = 10
+    const VARIANT_MASK = 0x3f; // Clear variant bits
+    const VARIANT_VALUE = 0x80; // Set variant to 10
+    bytes[8] = (bytes[8] & VARIANT_MASK) | VARIANT_VALUE;
 
     // Convert bytes to UUID string format
     const hex = Array.from(bytes, byte => byte.toString(16).padStart(2, '0')).join('');

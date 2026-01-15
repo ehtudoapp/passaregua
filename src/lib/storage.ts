@@ -12,8 +12,9 @@ export function createGroup(data: { nome: string; members?: string[] }): Group {
   // Add members if provided
   if (data.members && data.members.length > 0) {
     data.members.forEach(memberName => {
-      if (memberName.trim()) {
-        addMemberToGroup(group.id, memberName.trim());
+      const trimmedName = memberName.trim();
+      if (trimmedName) {
+        addMemberToGroup(group.id, trimmedName);
       }
     });
   }

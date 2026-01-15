@@ -23,7 +23,7 @@ const groupNameError = ref('');
 const memberInputs = ref<{ id: number; name: string; error?: string }[]>([
   { id: 1, name: '' }
 ]);
-let nextMemberId = 2;
+const nextMemberId = ref(2);
 
 const groups = ref<GroupWithCount[]>([]);
 
@@ -48,11 +48,11 @@ function resetForm() {
   groupName.value = '';
   groupNameError.value = '';
   memberInputs.value = [{ id: 1, name: '' }];
-  nextMemberId = 2;
+  nextMemberId.value = 2;
 }
 
 function addMemberInput() {
-  memberInputs.value.push({ id: nextMemberId++, name: '' });
+  memberInputs.value.push({ id: nextMemberId.value++, name: '' });
 }
 
 function removeMemberInput(id: number) {
@@ -77,12 +77,13 @@ function validateMembers(): boolean {
   memberInputs.value.forEach(input => {
     input.error = '';
     const trimmedName = input.name.trim();
+    const lowerCaseName = trimmedName.toLowerCase();
     
-    if (trimmedName && names.has(trimmedName.toLowerCase())) {
+    if (trimmedName && names.has(lowerCaseName)) {
       input.error = 'Nome duplicado';
       isValid = false;
     } else if (trimmedName) {
-      names.add(trimmedName.toLowerCase());
+      names.add(lowerCaseName);
     }
   });
   
