@@ -3,13 +3,9 @@ import { ref, computed } from 'vue';
 import type { Expense } from './types';
 import { calculateBalances, calculateMinimumTransactions } from './algorithm';
 import { EPSILON } from './constants';
-import { 
-  Bars3Icon, 
-  BanknotesIcon, 
-  Cog6ToothIcon, 
-  UserGroupIcon 
-} from '@heroicons/vue/24/solid';
 import GroupsView from './views/GroupsView.vue';
+import AppHeader from './components/AppHeader.vue';
+import AppNavbar from './components/AppNavbar.vue';
 
 // Estado da aplicação
 const people = ref<string[]>([]);
@@ -117,16 +113,12 @@ function formatBalance(balance: number): string {
 
 <template>
   <!-- Groups View -->
-  <GroupsView v-if="activeNav === 'members'" />
+  <GroupsView v-if="activeNav === 'members'" :activeNav="activeNav" @update:activeNav="activeNav = $event" />
   
   <!-- Default View -->
   <div v-else class="min-h-screen flex flex-col bg-gray-50">
-    <!-- Navbar Top -->
-    <nav class="bg-emerald-700 text-white sticky top-0 z-50">
-      <div class="max-w-4xl mx-auto px-4 py-4">
-        <h1 class="text-2xl font-bold">Passa a régua</h1>
-      </div>
-    </nav>
+    <!-- Header -->
+    <AppHeader title="Passa a régua" />
 
     <!-- Main Content -->
     <main class="flex-1 px-4 py-6 pb-24">
@@ -303,49 +295,6 @@ function formatBalance(balance: number): string {
   </div>
 
   <!-- Navbar Bottom (Mobile) - Always visible -->
-  <nav class="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-50">
-    <div class="flex justify-around max-w-4xl mx-auto">
-      <button
-        @click="activeNav = 'home'"
-        :class="[
-          'flex-1 py-3 px-3 flex flex-col items-center gap-1 border-t-2 transition',
-          activeNav === 'home' ? 'border-emerald-700 text-emerald-700' : 'border-transparent text-gray-500 hover:text-gray-700'
-        ]"
-      >
-        <Bars3Icon class="w-6 h-6" />
-        <p class="text-xs">Despesas</p>
-      </button>
-      <button
-        @click="activeNav = 'transactions'"
-        :class="[
-          'flex-1 py-3 px-3 flex flex-col items-center gap-1 border-t-2 transition',
-          activeNav === 'transactions' ? 'border-emerald-700 text-emerald-700' : 'border-transparent text-gray-500 hover:text-gray-700'
-        ]"
-      >
-        <BanknotesIcon class="w-6 h-6" />
-        <p class="text-xs">Saldos</p>
-      </button>
-      <button
-        @click="activeNav = 'settings'"
-        :class="[
-          'flex-1 py-3 px-3 flex flex-col items-center gap-1 border-t-2 transition',
-          activeNav === 'settings' ? 'border-emerald-700 text-emerald-700' : 'border-transparent text-gray-500 hover:text-gray-700'
-        ]"
-      >
-        <Cog6ToothIcon class="w-6 h-6" />
-        <p class="text-xs">Config</p>
-      </button>
-      <button
-        @click="activeNav = 'members'"
-        :class="[
-          'flex-1 py-3 px-3 flex flex-col items-center gap-1 border-t-2 transition',
-          activeNav === 'members' ? 'border-emerald-700 text-emerald-700' : 'border-transparent text-gray-500 hover:text-gray-700'
-        ]"
-      >
-        <UserGroupIcon class="w-6 h-6" />
-        <p class="text-xs">Grupos</p>
-      </button>
-    </div>
-  </nav>
+  <AppNavbar :activeNav="activeNav" @update:activeNav="activeNav = $event" />
 </template>
 

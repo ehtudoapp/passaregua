@@ -29,16 +29,16 @@ function closeDrawer() {
   <Teleport to="body">
     <!-- Overlay -->
     <Transition
-      enter-active-class="transition-opacity duration-300"
+      enter-active-class="transition-opacity duration-300 ease-out"
       enter-from-class="opacity-0"
       enter-to-class="opacity-100"
-      leave-active-class="transition-opacity duration-300"
+      leave-active-class="transition-opacity duration-300 ease-in"
       leave-from-class="opacity-100"
       leave-to-class="opacity-0"
     >
       <div
         v-if="modelValue"
-        class="fixed inset-0 bg-black bg-opacity-50 z-40"
+        class="fixed inset-0 bg-black/50 z-40"
         @click="closeDrawer"
       />
     </Transition>
