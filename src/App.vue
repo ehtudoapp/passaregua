@@ -4,6 +4,7 @@ import type { Expense } from './types';
 import { calculateBalances, calculateMinimumTransactions } from './algorithm';
 import { EPSILON } from './constants';
 import GroupsView from './views/GroupsView.vue';
+import SettingsView from './views/SettingsView.vue';
 import AppHeader from './components/AppHeader.vue';
 import AppNavbar from './components/AppNavbar.vue';
 
@@ -114,6 +115,9 @@ function formatBalance(balance: number): string {
 <template>
   <!-- Groups View -->
   <GroupsView v-if="activeNav === 'members'" :activeNav="activeNav" @update:activeNav="activeNav = $event" />
+  
+  <!-- Settings View -->
+  <SettingsView v-else-if="activeNav === 'settings'" :activeNav="activeNav" @update:activeNav="activeNav = $event" />
   
   <!-- Default View -->
   <div v-else class="min-h-screen flex flex-col bg-gray-50">

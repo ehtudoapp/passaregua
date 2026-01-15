@@ -5,7 +5,8 @@ import {
   PlusIcon, 
   MinusIcon,
   UserGroupIcon,
-  PlusCircleIcon
+  PlusCircleIcon,
+  CheckCircleIcon
 } from '@heroicons/vue/24/solid';
 import Button from '../components/Button.vue';
 import Input from '../components/Input.vue';
@@ -16,10 +17,9 @@ import {
   createGroup,
   getGroupsWithMemberCount,
   type GroupWithCount,
-  getActiveGroupId,
-  setActiveGroupId,
   updateGroupName
 } from '../lib/storage';
+import { useActiveGroup } from '../composables/useActiveGroup';
 
 // Props and emits for navigation
 defineProps<{
@@ -40,7 +40,7 @@ const memberInputs = ref<{ id: number; name: string; error?: string }[]>([
 const nextMemberId = ref(2);
 
 const groups = ref<GroupWithCount[]>([]);
-const activeGroupId = ref<string | null>(null);
+const { activeGroupId, setActiveGroupId } = useActiveGroup();
 
 // Edit drawer state
 const editDrawerOpen = ref(false);
@@ -53,7 +53,6 @@ loadGroups();
 
 function loadGroups() {
   groups.value = getGroupsWithMemberCount();
-  activeGroupId.value = getActiveGroupId();
 }
 
 function openDrawer() {
@@ -172,6 +171,14 @@ function handleSaveGroupName() {
     editGroupNameError.value = error instanceof Error ? error.message : 'Erro ao atualizar grupo';
   }
 }
+
+function handleActivateGroup() {
+  if (editingGroup.value) {
+    setActiveGroupId(editingGroup.value.id);
+    groups.value = getGroupsWithMemberCount();
+    closeEditDrawer();
+  }
+}
 </script>
 
 <template>
@@ -196,13 +203,22 @@ function handleSaveGroupName() {
         <div class="space-y-4">
           <h2 class="text-xl font-semibold text-gray-900">Grupos</h2>
           
+          <!-- Alert when no active group -->
+          <div v-if="groups.length > 0 && activeGroupId === null" class="text-center py-8 text-amber-600 bg-amber-50 border border-amber-200 rounded-lg">
+            <CheckCircleIcon class="w-12 h-12 mx-auto mb-3 text-amber-400" />
+            <p class="text-base font-medium">Nenhum grupo ativo</p>
+            <p class="text-sm mt-1">Clique em um grupo abaixo e ative-o para começar</p>
+          </div>
+          
+          <!-- No groups message -->
           <div v-if="groups.length === 0" class="text-center py-12 text-gray-500">
             <UserGroupIcon class="w-16 h-16 mx-auto mb-4 text-gray-300" />
             <p class="text-lg">Nenhum grupo criado ainda</p>
             <p class="text-sm mt-2">Clique em "Adicionar Grupo" para começar</p>
           </div>
 
-          <div v-else class="grid gap-4 sm:grid-cols-2">
+          <!-- Groups grid -->
+          <div v-if="groups.length > 0" class="grid gap-4 sm:grid-cols-2">
             <div
               v-for="group in groups"
               :key="group.id"
@@ -350,9 +366,9 @@ function handleSaveGroupName() {
           v-if="activeGroupId !== editingGroup?.id"
           variant="primary"
           class="w-full"
-          @click="editingGroup && setActiveGroupId(editingGroup.id); loadGroups()"
+          @click="handleActivateGroup"
         >
-          Ativar Grupo
+          Tornar o grupo ativo
         </Button>
         <div v-else class="w-full px-4 py-2 bg-emerald-50 border border-emerald-200 rounded-lg text-emerald-700 text-sm text-center">
           ✓ Grupo ativo
