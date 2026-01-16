@@ -1,8 +1,9 @@
 <script setup lang="ts">
-import { ref, watch } from 'vue';
+import { ref, watch, computed } from 'vue';
 import { UserGroupIcon, XMarkIcon, PlusIcon } from '@heroicons/vue/24/solid';
 import type { UUID, TransactionRecord, Member } from '../types';
 import { useActiveGroup } from '../composables/useActiveGroup';
+import { useCurrentUsername } from '../composables/useCurrentUsername';
 import { getGroupMembers, createTransaction, createSplit, getGroupTransactions, getMember } from '../lib/storage';
 import AppHeader from '../components/AppHeader.vue';
 import AppNavbar from '../components/AppNavbar.vue';
@@ -12,6 +13,7 @@ import Drawer from '../components/Drawer.vue';
 
 // Composables
 const { activeGroupId } = useActiveGroup();
+const { currentUsername } = useCurrentUsername();
 
 // Props and emits for navigation
 defineProps<{
@@ -53,7 +55,20 @@ watch(activeGroupId, (newGroupId) => {
     }
 }, { immediate: true });
 
+// Reset form when drawer opens
+watch(drawerOpen, (isOpen) => {
+    if (isOpen) {
+        resetForm();
+    }
+});
+
 // Computed properties
+const sortedTransactions = computed(() => {
+    return [...transactions.value].sort((a, b) => {
+        return new Date(b.data).getTime() - new Date(a.data).getTime();
+    });
+});
+
 const getPayerName = (payerId: UUID): string => {
     const member = getMember(payerId);
     return member?.nome || 'Desconhecido';
@@ -67,8 +82,10 @@ const formatCurrency = (cents: number): string => {
 };
 
 const formatDate = (isoDate: string): string => {
-    const date = new Date(isoDate);
-    return date.toLocaleDateString('pt-BR');
+    // Parse only the date part to avoid timezone issues
+    const datePart = isoDate.split('T')[0];
+    const [year, month, day] = datePart.split('-').map(Number);
+    return `${day.toString().padStart(2, '0')}/${month.toString().padStart(2, '0')}/${year}`;
 };
 
 // Validation
@@ -148,11 +165,14 @@ function handleAddExpense() {
 }
 
 function resetForm() {
+    // Find the member ID for the current username
+    const currentMember = members.value.find(m => m.nome === currentUsername.value);
+    
     formData.value = {
         descricao: '',
         valor: '',
-        data: '',
-        pagador_id: '',
+        data: new Date().toISOString().split('T')[0],
+        pagador_id: currentMember?.id || '',
         participantes_ids: []
     };
     errors.value = {
@@ -206,7 +226,7 @@ function isParticipantSelected(memberId: UUID): boolean {
                         </div>
 
                         <div v-else class="p-4 space-y-3">
-                            <div v-for="transaction in transactions" :key="transaction.id"
+                            <div v-for="transaction in sortedTransactions" :key="transaction.id"
                                 class="bg-white rounded-lg border border-gray-200 p-4 shadow-sm">
                                 <div class="flex justify-between items-start mb-2">
                                     <div>
@@ -215,11 +235,11 @@ function isParticipantSelected(memberId: UUID): boolean {
                                     </div>
                                     <div class="text-right">
                                         <p class="font-bold text-emerald-700">{{ formatCurrency(transaction.valor_total)
-                                            }}</p>
+                                        }}</p>
                                     </div>
                                 </div>
-                                <p class="text-sm text-gray-600">Pagou: <span class="font-medium">{{
-                                        getPayerName(transaction.pagador_id) }}</span></p>
+                                <p class="text-sm text-gray-600">Pago por: <span class="font-medium">{{
+                                    getPayerName(transaction.pagador_id) }}</span></p>
                             </div>
                         </div>
                     </div>
@@ -253,6 +273,9 @@ function isParticipantSelected(memberId: UUID): boolean {
                 <div class="border-b border-gray-200 pb-6">
                     <h3 class="text-lg font-semibold text-gray-900 mb-4">Detalhes da despesa</h3>
                     <div class="space-y-4">
+                        <!-- Data -->
+                        <Input v-model="formData.data" label="Data" type="date" :error="errors.data" />
+
                         <!-- Descrição -->
                         <Input v-model="formData.descricao" label="Descrição" placeholder="Descrição da despesa"
                             :error="errors.descricao" />
@@ -260,9 +283,6 @@ function isParticipantSelected(memberId: UUID): boolean {
                         <!-- Valor -->
                         <Input v-model="formData.valor" label="Valor" type="number" placeholder="36.00" step="0.01"
                             min="0" :error="errors.valor" />
-
-                        <!-- Data -->
-                        <Input v-model="formData.data" label="Data" type="date" :error="errors.data" />
                     </div>
                 </div>
 

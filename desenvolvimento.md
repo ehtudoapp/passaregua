@@ -103,10 +103,10 @@
 **FAB:** 💸 Registrar pagamento
 
 **Funcionalidades:**
-- [ ] Exibir saldo de cada participante
+- [x] Exibir saldo de cada participante
   - Positivo (verde): tem a receber
   - Negativo (vermelho): deve
-- [ ] Registrar pagamento entre membros
+- [x] Registrar pagamento entre membros
 
 ---
 
@@ -144,19 +144,19 @@
 ## 5. Checklist de Implementação
 
 - [x] Setup do projeto (Vite + React + Tailwind)
-- [ ] Helpers de Local Storage (CRUD genérico)
+- [x] Helpers de Local Storage (CRUD genérico)
 - [x] Gerador de UUID v4
 - [x] Contexto de grupo ativo
-- [ ] Componente FAB reutilizável
-- [ ] Componente Drawer reutilizável
+- [x] Componente FAB reutilizável
+- [x] Componente Drawer reutilizável
 - [x] Página de Grupos
-- [ ] Página de Despesas
-- [ ] Página de Saldos
+- [x] Página de Despesas
+- [x] Página de Saldos
 - [x] Página de Configurações
-- [ ] Cálculo de saldos (algoritmo de liquidação)
+- [x] Cálculo de saldos (algoritmo de liquidação)
 
 ## 6. Detalhes
-- [ ] Data ao lançar despesa já pegar a data atual
+- [x] Data ao lançar despesa já pegar a data atual
 - [ ] Mostrar o valor da divisão entre parenteses ao inserir despesa
 - [ ] Mostrar participantes no cartão de despesas
 - [ ] Divisão por porcentagem
