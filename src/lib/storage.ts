@@ -1,9 +1,12 @@
 import { createStorage, type StorageAPI } from './localStorage';
-import type { Group, Member, UUID, ActiveGroupId } from '../types';
+import type { Group, Member, UUID, ActiveGroupId, TransactionRecord, Split, Cents } from '../types';
+import { generateUUID } from './uuid';
 
 // Storage instances
 export const groupsStorage: StorageAPI<Group> = createStorage<Group>('groups');
 export const membersStorage: StorageAPI<Member> = createStorage<Member>('members');
+export const transactionsStorage: StorageAPI<TransactionRecord> = createStorage<TransactionRecord>('transactions');
+export const splitsStorage: StorageAPI<Split> = createStorage<Split>('splits');
 
 // Active group storage
 const ACTIVE_GROUP_KEY = 'pr:activeGroupId';
@@ -181,4 +184,68 @@ export function setCurrentUsername(username: string | null): void {
   } catch (e) {
     // Handle cases where localStorage might not be available
   }
+}
+
+// Transaction utility functions
+export function createTransaction(
+  groupId: UUID,
+  descricao: string,
+  valorTotal: Cents,
+  data: string, // ISO 8601 format
+  pagadorId: UUID
+): TransactionRecord {
+  return transactionsStorage.create({
+    group_id: groupId,
+    tipo: 'despesa',
+    descricao,
+    valor_total: valorTotal,
+    data,
+    pagador_id: pagadorId
+  });
+}
+
+export function getGroupTransactions(groupId: UUID): TransactionRecord[] {
+  return transactionsStorage.find(transaction => transaction.group_id === groupId);
+}
+
+export function getTransaction(id: UUID): TransactionRecord | undefined {
+  return transactionsStorage.get(id);
+}
+
+export function removeTransaction(id: UUID): boolean {
+  // Remove all splits associated with this transaction
+  const splits = getTransactionSplits(id);
+  splits.forEach(split => splitsStorage.remove(split.id));
+  
+  return transactionsStorage.remove(id);
+}
+
+// Split utility functions
+export function createSplit(
+  transactionId: UUID,
+  devedorId: UUID,
+  valorDue: Cents
+): Split {
+  return splitsStorage.create({
+    transaction_id: transactionId,
+    devedor_id: devedorId,
+    valor_pago: 0,
+    valor_devido: valorDue
+  });
+}
+
+export function getTransactionSplits(transactionId: UUID): Split[] {
+  return splitsStorage.find(split => split.transaction_id === transactionId);
+}
+
+export function getSplit(id: UUID): Split | undefined {
+  return splitsStorage.get(id);
+}
+
+export function updateSplit(id: UUID, patch: Partial<Split>): Split | undefined {
+  return splitsStorage.update(id, patch);
+}
+
+export function removeSplit(id: UUID): boolean {
+  return splitsStorage.remove(id);
 }

@@ -7,11 +7,11 @@ import {
 } from '@heroicons/vue/24/solid';
 
 defineProps<{
-  activeNav: 'home' | 'transactions' | 'settings' | 'members';
+  activeNav: 'transactions' | 'totals' | 'settings' | 'groups';
 }>();
 
 defineEmits<{
-  'update:activeNav': [value: 'home' | 'transactions' | 'settings' | 'members'];
+  'update:activeNav': [value: 'transactions' | 'totals' | 'settings' | 'groups'];
 }>();
 </script>
 
@@ -19,20 +19,20 @@ defineEmits<{
   <nav class="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-50">
     <div class="flex justify-around max-w-4xl mx-auto">
       <button
-        @click="$emit('update:activeNav', 'home')"
+        @click="$emit('update:activeNav', 'transactions')"
         :class="[
           'flex-1 py-3 px-3 flex flex-col items-center gap-1 border-t-2 transition',
-          activeNav === 'home' ? 'border-emerald-700 text-emerald-700' : 'border-transparent text-gray-500 hover:text-gray-700'
+          activeNav === 'transactions' ? 'border-emerald-700 text-emerald-700' : 'border-transparent text-gray-500 hover:text-gray-700'
         ]"
       >
         <Bars3Icon class="w-6 h-6" />
         <p class="text-xs">Despesas</p>
       </button>
       <button
-        @click="$emit('update:activeNav', 'transactions')"
+        @click="$emit('update:activeNav', 'totals')"
         :class="[
           'flex-1 py-3 px-3 flex flex-col items-center gap-1 border-t-2 transition',
-          activeNav === 'transactions' ? 'border-emerald-700 text-emerald-700' : 'border-transparent text-gray-500 hover:text-gray-700'
+          activeNav === 'totals' ? 'border-emerald-700 text-emerald-700' : 'border-transparent text-gray-500 hover:text-gray-700'
         ]"
       >
         <BanknotesIcon class="w-6 h-6" />
@@ -49,10 +49,10 @@ defineEmits<{
         <p class="text-xs">Config</p>
       </button>
       <button
-        @click="$emit('update:activeNav', 'members')"
+        @click="$emit('update:activeNav', 'groups')"
         :class="[
           'flex-1 py-3 px-3 flex flex-col items-center gap-1 border-t-2 transition',
-          activeNav === 'members' ? 'border-emerald-700 text-emerald-700' : 'border-transparent text-gray-500 hover:text-gray-700'
+          activeNav === 'groups' ? 'border-emerald-700 text-emerald-700' : 'border-transparent text-gray-500 hover:text-gray-700'
         ]"
       >
         <UserGroupIcon class="w-6 h-6" />

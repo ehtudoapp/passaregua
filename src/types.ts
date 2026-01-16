@@ -59,3 +59,12 @@ export interface Split {
 export interface Identifiable {
   id: UUID;
 }
+
+// Form data types
+export interface ExpenseFormData {
+  descricao: string;
+  valor: number;
+  data: string; // format: YYYY-MM-DD
+  pagador_id: UUID;
+  participantes_ids: UUID[]; // IDs de membros selecionados para divisão
+}

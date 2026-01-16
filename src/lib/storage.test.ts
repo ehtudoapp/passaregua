@@ -138,6 +138,23 @@ describe('Storage', () => {
       expect(getGroupMembers(group1.id)).toHaveLength(2);
       expect(getGroupMembers(group2.id)).toHaveLength(1);
     });
+
+    it('should backfill ids for members missing id', () => {
+      const group = createGroup({ nome: 'Team' });
+
+      // Simulate legacy records without ids
+      localStorage.setItem('pr:members', JSON.stringify([
+        { group_id: group.id, nome: 'Alice' }
+      ]));
+
+      const members = getGroupMembers(group.id);
+
+      expect(members).toHaveLength(1);
+      expect(members[0].id).toBeDefined();
+
+      const persisted = JSON.parse(localStorage.getItem('pr:members') || '[]');
+      expect(persisted[0].id).toBe(members[0].id);
+    });
   });
 
   describe('getGroupsWithMemberCount', () => {

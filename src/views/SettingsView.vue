@@ -22,11 +22,11 @@ import { useCurrentUsername } from '../composables/useCurrentUsername';
 
 // Props and emits for navigation
 defineProps<{
-    activeNav: 'home' | 'transactions' | 'settings' | 'members';
+    activeNav: 'transactions' | 'totals' | 'settings' | 'groups';
 }>();
 
 defineEmits<{
-    'update:activeNav': [value: 'home' | 'transactions' | 'settings' | 'members'];
+    'update:activeNav': [value: 'transactions' | 'totals' | 'settings' | 'groups'];
 }>();
 
 // State
