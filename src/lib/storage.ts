@@ -203,6 +203,22 @@ export function createTransaction(
   });
 }
 
+export function createPaymentTransaction(
+  groupId: UUID,
+  valorTotal: Cents,
+  data: string, // ISO 8601 format
+  pagadorId: UUID
+): TransactionRecord {
+  return transactionsStorage.create({
+    group_id: groupId,
+    tipo: 'pagamento',
+    descricao: 'Pagamento',
+    valor_total: valorTotal,
+    data,
+    pagador_id: pagadorId
+  });
+}
+
 export function getGroupTransactions(groupId: UUID): TransactionRecord[] {
   return transactionsStorage.find(transaction => transaction.group_id === groupId);
 }

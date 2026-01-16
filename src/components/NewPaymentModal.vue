@@ -2,7 +2,7 @@
 import { ref, watch } from 'vue';
 import { XMarkIcon } from '@heroicons/vue/24/solid';
 import { useActiveGroup } from '../composables/useActiveGroup';
-import { getGroupMembers, createTransaction, createSplit } from '../lib/storage';
+import { getGroupMembers, createPaymentTransaction, createSplit } from '../lib/storage';
 import Button from './Button.vue';
 import Input from './Input.vue';
 import Drawer from './Drawer.vue';
@@ -123,17 +123,13 @@ function handleSubmit() {
   // Convert date to ISO 8601 format
   const isoDate = new Date(formData.value.data).toISOString();
 
-  // Create payment transaction
-  const transaction = createTransaction(
+  // Create payment transaction with the correct type
+  const transaction = createPaymentTransaction(
     activeGroupId.value,
-    'Pagamento',
     valorTotal,
     isoDate,
     formData.value.pagador_id
   );
-
-  // Update transaction type to 'pagamento'
-  transaction.tipo = 'pagamento';
 
   // Create split for the receiver
   createSplit(transaction.id, formData.value.recebedor_id, valorTotal);

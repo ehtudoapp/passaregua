@@ -54,6 +54,7 @@ export function useBalances() {
     transactions.forEach(transaction => {
       // Only process expenses, not payments
       if (transaction.tipo === 'despesa') {
+        // Add to total expenses (only despesas count)
         total += transaction.valor_total;
 
         // Add to payer's balance (they paid, so they are owed)
@@ -108,7 +109,7 @@ export function useBalances() {
     const balancesCopy = memberBalances.map(b => ({ ...b }));
     const transactions: SuggestedTransaction[] = [];
 
-    const EPSILON = 0.01; // 1 cent tolerance
+    const EPSILON = 1; // 1 cent tolerance (values are stored as cents)
 
     while (true) {
       // Find the person who owes the most (most negative balance)
