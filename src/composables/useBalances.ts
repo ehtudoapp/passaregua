@@ -75,21 +75,21 @@ export function useBalances() {
         });
       } else if (transaction.tipo === 'pagamento') {
         // For payments, we need to adjust balances
-        // The payer's balance decreases (they paid off some debt)
-        // The receiver's balance decreases (they received what they were owed)
+        // The payer's balance increases (they settled debt, reducing what they owe)
+        // The receiver's balance decreases (they got paid, reducing what they're owed)
         const splits = getTransactionSplits(transaction.id);
         
-        // Payment: payer loses money (increases debt or reduces credit)
+        // Payment: payer paid their debt (balance increases - less debt)
         const payerBalance = memberBalances.get(transaction.pagador_id);
         if (payerBalance) {
-          payerBalance.balance -= transaction.valor_total;
+          payerBalance.balance += transaction.valor_total;
         }
 
-        // Payment: receiver gains money (reduces debt or increases credit)
+        // Payment: receiver got paid (balance decreases - less credit)
         splits.forEach(split => {
           const receiverBalance = memberBalances.get(split.devedor_id);
           if (receiverBalance) {
-            receiverBalance.balance += split.valor_devido;
+            receiverBalance.balance -= split.valor_devido;
           }
         });
       }

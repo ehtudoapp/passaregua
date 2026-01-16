@@ -2,6 +2,7 @@
 import { ref, watch } from 'vue';
 import { XMarkIcon } from '@heroicons/vue/24/solid';
 import { useActiveGroup } from '../composables/useActiveGroup';
+import { useCurrentUsername } from '../composables/useCurrentUsername';
 import { getGroupMembers, createPaymentTransaction, createSplit } from '../lib/storage';
 import Button from './Button.vue';
 import Input from './Input.vue';
@@ -17,6 +18,7 @@ const emit = defineEmits<{
 }>();
 
 const { activeGroupId } = useActiveGroup();
+const { currentUsername } = useCurrentUsername();
 
 // Form state
 const formData = ref({
@@ -58,10 +60,13 @@ watch(() => props.modelValue, (isOpen) => {
 });
 
 function resetForm() {
+  // Find the member ID for the current username
+  const currentMember = members.value.find(m => m.nome === currentUsername.value);
+  
   formData.value = {
     data: new Date().toISOString().split('T')[0],
     valor: '',
-    pagador_id: '',
+    pagador_id: currentMember?.id || '',
     recebedor_id: ''
   };
   errors.value = {
@@ -123,12 +128,17 @@ function handleSubmit() {
   // Convert date to ISO 8601 format
   const isoDate = new Date(formData.value.data).toISOString();
 
+  // Get receiver name for description
+  const receiver = members.value.find(m => m.id === formData.value.recebedor_id);
+  const descricao = receiver ? `Pagamento para ${receiver.nome}` : 'Pagamento';
+
   // Create payment transaction with the correct type
   const transaction = createPaymentTransaction(
     activeGroupId.value,
     valorTotal,
     isoDate,
-    formData.value.pagador_id
+    formData.value.pagador_id,
+    descricao
   );
 
   // Create split for the receiver
