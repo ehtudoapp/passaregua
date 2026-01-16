@@ -1,6 +1,5 @@
 import { createStorage, type StorageAPI } from './localStorage';
 import type { Group, Member, UUID, ActiveGroupId, TransactionRecord, Split, Cents } from '../types';
-import { generateUUID } from './uuid';
 
 // Storage instances
 export const groupsStorage: StorageAPI<Group> = createStorage<Group>('groups');
