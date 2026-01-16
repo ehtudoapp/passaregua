@@ -1,10 +1,10 @@
 <script setup lang="ts">
 import { ref, watch, computed } from 'vue';
-import { UserGroupIcon, XMarkIcon, PlusIcon } from '@heroicons/vue/24/solid';
+import { UserGroupIcon, XMarkIcon, PlusIcon, TrashIcon } from '@heroicons/vue/24/solid';
 import type { UUID, TransactionRecord, Member } from '../types';
 import { useActiveGroup } from '../composables/useActiveGroup';
 import { useCurrentUsername } from '../composables/useCurrentUsername';
-import { getGroupMembers, createTransaction, createSplit, getGroupTransactions, getMember } from '../lib/storage';
+import { getGroupMembers, createTransaction, createSplit, getGroupTransactions, getMember, removeTransaction } from '../lib/storage';
 import AppHeader from '../components/AppHeader.vue';
 import AppNavbar from '../components/AppNavbar.vue';
 import Button from '../components/Button.vue';
@@ -200,6 +200,15 @@ function toggleParticipant(memberId: UUID) {
 function isParticipantSelected(memberId: UUID): boolean {
     return formData.value.participantes_ids.includes(memberId);
 }
+
+function handleDeleteTransaction(transactionId: UUID) {
+    if (confirm('Tem certeza que deseja excluir esta despesa?')) {
+        removeTransaction(transactionId);
+        if (activeGroupId.value) {
+            transactions.value = getGroupTransactions(activeGroupId.value);
+        }
+    }
+}
 </script>
 
 <template>
@@ -229,13 +238,18 @@ function isParticipantSelected(memberId: UUID): boolean {
                             <div v-for="transaction in sortedTransactions" :key="transaction.id"
                                 class="bg-white rounded-lg border border-gray-200 p-4 shadow-sm">
                                 <div class="flex justify-between items-start mb-2">
-                                    <div>
+                                    <div class="flex-1">
                                         <h3 class="font-semibold text-gray-900">{{ transaction.descricao }}</h3>
                                         <p class="text-sm text-gray-500">{{ formatDate(transaction.data) }}</p>
                                     </div>
-                                    <div class="text-right">
-                                        <p class="font-bold text-emerald-700">{{ formatCurrency(transaction.valor_total)
-                                        }}</p>
+                                    <div class="flex items-center gap-2">
+                                        <div class="text-right">
+                                            <p class="font-bold text-emerald-700">{{ formatCurrency(transaction.valor_total)
+                                            }}</p>
+                                        </div>
+                                        <Button variant="danger" @click="handleDeleteTransaction(transaction.id)">
+                                            <TrashIcon class="w-4 h-4" />
+                                        </Button>
                                     </div>
                                 </div>
                                 <p class="text-sm text-gray-600">Pago por: <span class="font-medium">{{
