@@ -6,6 +6,7 @@ import { EPSILON } from './constants';
 import GroupsView from './views/GroupsView.vue';
 import SettingsView from './views/SettingsView.vue';
 import ExpensesView from './views/ExpensesView.vue';
+import BalancesView from './views/BalancesView.vue';
 import AppHeader from './components/AppHeader.vue';
 import AppNavbar from './components/AppNavbar.vue';
 
@@ -119,6 +120,9 @@ function formatBalance(balance: number): string {
   
   <!-- Expenses View -->
   <ExpensesView v-else-if="activeNav === 'transactions'" :activeNav="activeNav" @update:activeNav="activeNav = $event" />
+
+  <!-- Balances View -->
+  <BalancesView v-else-if="activeNav === 'totals'" :activeNav="activeNav" @update:activeNav="activeNav = $event" />
 
   <!-- Settings View -->
   <SettingsView v-else-if="activeNav === 'settings'" :activeNav="activeNav" @update:activeNav="activeNav = $event" />
