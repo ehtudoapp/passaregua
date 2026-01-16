@@ -5,6 +5,7 @@ import { calculateBalances, calculateMinimumTransactions } from './algorithm';
 import { EPSILON } from './constants';
 import GroupsView from './views/GroupsView.vue';
 import SettingsView from './views/SettingsView.vue';
+import ExpensesView from './views/ExpensesView.vue';
 import AppHeader from './components/AppHeader.vue';
 import AppNavbar from './components/AppNavbar.vue';
 
@@ -15,7 +16,7 @@ const personName = ref('');
 const selectedPayer = ref('');
 const expenseAmount = ref<number | null>(null);
 const showResults = ref(false);
-const activeNav = ref<'home' | 'transactions' | 'settings' | 'members'>('home');
+const activeNav = ref<'transactions' | 'totals' | 'settings' | 'groups'>('transactions');
 
 // Computed
 const balances = computed(() => calculateBalances(expenses.value, people.value));
@@ -114,8 +115,11 @@ function formatBalance(balance: number): string {
 
 <template>
   <!-- Groups View -->
-  <GroupsView v-if="activeNav === 'members'" :activeNav="activeNav" @update:activeNav="activeNav = $event" />
+  <GroupsView v-if="activeNav === 'groups'" :activeNav="activeNav" @update:activeNav="activeNav = $event" />
   
+  <!-- Expenses View -->
+  <ExpensesView v-else-if="activeNav === 'transactions'" :activeNav="activeNav" @update:activeNav="activeNav = $event" />
+
   <!-- Settings View -->
   <SettingsView v-else-if="activeNav === 'settings'" :activeNav="activeNav" @update:activeNav="activeNav = $event" />
   

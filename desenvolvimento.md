@@ -75,9 +75,9 @@
 | Com grupos                        | Listar grupos e permitir seleção  |
 
 **Funcionalidades:**
-- [ ] Criar novo grupo (gera UUID v4)
-- [ ] Adicionar participantes ao grupo
-- [ ] Selecionar grupo ativo
+- [x] Criar novo grupo (gera UUID v4)
+- [x] Adicionar participantes ao grupo
+- [x] Selecionar grupo ativo
 
 ---
 
@@ -115,9 +115,8 @@
 **Rota:** `/config`
 
 **Funcionalidades:**
-- [ ] Adicionar/remover participantes do grupo
-- [ ] Definir usuário ativo (facilita lançamentos)
-- [ ] Renomear grupo
+- [x] Adicionar/remover participantes do grupo
+- [x] Definir usuário ativo (facilita lançamentos)
 - [ ] Exportar/limpar dados
 
 ---
@@ -146,12 +145,16 @@
 
 - [x] Setup do projeto (Vite + React + Tailwind)
 - [ ] Helpers de Local Storage (CRUD genérico)
-- [ ] Gerador de UUID v4
-- [ ] Contexto de grupo ativo
+- [x] Gerador de UUID v4
+- [x] Contexto de grupo ativo
 - [ ] Componente FAB reutilizável
 - [ ] Componente Drawer reutilizável
-- [ ] Página de Grupos
+- [x] Página de Grupos
 - [ ] Página de Despesas
 - [ ] Página de Saldos
-- [ ] Página de Configurações
+- [x] Página de Configurações
 - [ ] Cálculo de saldos (algoritmo de liquidação)
+
+## 6. Detalhes
+- [ ] Data ao lançar despesa já pegar a data atual
+- [ ] Mostrar o valor da divisão entre parenteses ao inserir despesa

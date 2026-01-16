@@ -1,9 +1,11 @@
 import type { Identifiable, UUID } from '../types';
+import { generateUUID } from './uuid';
 
 function readRaw<T>(key: string): T[] {
   if (typeof localStorage === 'undefined') return [];
   const raw = localStorage.getItem(key);
-  return raw ? (JSON.parse(raw) as T[]) : [];
+  const items = raw ? (JSON.parse(raw) as T[]) : [];
+  return ensureIds(key, items);
 }
 
 function writeRaw<T>(key: string, items: T[]) {
@@ -11,19 +13,23 @@ function writeRaw<T>(key: string, items: T[]) {
   localStorage.setItem(key, JSON.stringify(items));
 }
 
-function makeId(): UUID {
-  try {
-    // navigator/modern browsers
-    // @ts-ignore
-    if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
-      // @ts-ignore
-      return crypto.randomUUID();
-    }
-  } catch (e) {
-    // ignore
+function ensureIds<T>(key: string, items: T[]): T[] {
+  let mutated = false;
+  const withIds = items.map(item => {
+    if ((item as any).id) return item;
+    mutated = true;
+    return { ...(item as object), id: makeId() } as T;
+  });
+
+  if (mutated) {
+    writeRaw<T>(key, withIds);
   }
-  // fallback simple UUID-like string
-  return 'id-' + Math.random().toString(36).slice(2, 10) + Date.now().toString(36);
+
+  return withIds;
+}
+
+function makeId(): UUID {
+  return generateUUID();
 }
 
 export interface StorageAPI<T extends Identifiable> {

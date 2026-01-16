@@ -5,7 +5,6 @@ import {
   PlusIcon, 
   MinusIcon,
   UserGroupIcon,
-  PlusCircleIcon,
   CheckCircleIcon
 } from '@heroicons/vue/24/solid';
 import Button from '../components/Button.vue';
@@ -23,11 +22,11 @@ import { useActiveGroup } from '../composables/useActiveGroup';
 
 // Props and emits for navigation
 defineProps<{
-  activeNav: 'home' | 'transactions' | 'settings' | 'members';
+  activeNav: 'transactions' | 'totals' | 'settings' | 'groups';
 }>();
 
 defineEmits<{
-  'update:activeNav': [value: 'home' | 'transactions' | 'settings' | 'members'];
+  'update:activeNav': [value: 'transactions' | 'totals' | 'settings' | 'groups'];
 }>();
 
 // State
@@ -189,19 +188,8 @@ function handleActivateGroup() {
     <!-- Main Content -->
     <main class="flex-1 px-4 py-6 pb-24">
       <div class="max-w-xl mx-auto">
-        <!-- Add Group Button -->
-        <div class="mb-6">
-          <Button variant="primary" @click="openDrawer">
-            <div class="flex items-center gap-2">
-              <PlusCircleIcon class="w-5 h-5" />
-              <span>Adicionar Grupo</span>
-            </div>
-          </Button>
-        </div>
-
         <!-- Groups List -->
         <div class="space-y-4">
-          <h2 class="text-xl font-semibold text-gray-900">Grupos</h2>
           
           <!-- Alert when no active group -->
           <div v-if="groups.length > 0 && activeGroupId === null" class="text-center py-8 text-amber-600 bg-amber-50 border border-amber-200 rounded-lg">
@@ -214,7 +202,7 @@ function handleActivateGroup() {
           <div v-if="groups.length === 0" class="text-center py-12 text-gray-500">
             <UserGroupIcon class="w-16 h-16 mx-auto mb-4 text-gray-300" />
             <p class="text-lg">Nenhum grupo criado ainda</p>
-            <p class="text-sm mt-2">Clique em "Adicionar Grupo" para começar</p>
+            <p class="text-sm mt-2">Clique em "Criar grupo" para começar</p>
           </div>
 
           <!-- Groups grid -->
@@ -244,6 +232,18 @@ function handleActivateGroup() {
         </div>
       </div>
     </main>
+  </div>
+
+  <!-- FAB Button -->
+  <div class="fixed bottom-24 right-6 z-40">
+    <Button
+      variant="primary"
+      class="rounded-full px-6 py-3 flex items-center justify-center gap-2 shadow-lg text-white font-medium"
+      @click="openDrawer"
+    >
+      <PlusIcon class="w-5 h-5" />
+      <span>Criar grupo</span>
+    </Button>
   </div>
 
   <!-- Bottom Navigation -->
@@ -278,7 +278,7 @@ function handleActivateGroup() {
       <!-- Section 2: Add Users -->
       <div class="pb-6">
         <div class="flex items-center justify-between mb-4">
-          <h3 class="text-lg font-semibold text-gray-900">Adicionar Usuários</h3>
+          <h3 class="text-lg font-semibold text-gray-900">Adicionar membros</h3>
           <Button variant="primary" @click="addMemberInput">
             <div class="flex items-center gap-1">
               <PlusIcon class="w-4 h-4" />
