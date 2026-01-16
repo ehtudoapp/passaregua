@@ -247,7 +247,9 @@ function handleDeleteTransaction(transactionId: UUID) {
                                             <p class="font-bold text-emerald-700">{{ formatCurrency(transaction.valor_total)
                                             }}</p>
                                         </div>
-                                        <Button variant="danger" @click="handleDeleteTransaction(transaction.id)">
+                                        <Button variant="danger" @click="handleDeleteTransaction(transaction.id)"
+                                            :aria-label="`Excluir despesa ${transaction.descricao}`"
+                                            title="Excluir despesa">
                                             <TrashIcon class="w-4 h-4" />
                                         </Button>
                                     </div>
