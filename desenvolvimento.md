@@ -92,7 +92,7 @@
 - [+] Campo: Valor total
 - [+] Campo: Quem pagou (select de membros)
 - [+] Campo: Descrição
-- [+] Lista: Divisão por participante (editável)
+- [+] Lista: Divisão por participante
 
 ---
 
@@ -159,3 +159,6 @@
 - [ ] Data ao lançar despesa já pegar a data atual
 - [ ] Mostrar o valor da divisão entre parenteses ao inserir despesa
 - [ ] Mostrar participantes no cartão de despesas
+- [ ] Divisão por porcentagem
+- [ ] Divisão por valor
+- [ ] Divisão por partes
