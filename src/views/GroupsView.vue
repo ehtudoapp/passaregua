@@ -235,15 +235,17 @@ function handleActivateGroup() {
   </div>
 
   <!-- FAB Button -->
-  <div class="fixed bottom-24 right-6 z-40">
-    <Button
-      variant="primary"
-      class="rounded-full px-6 py-3 flex items-center justify-center gap-2 shadow-lg text-white font-medium"
-      @click="openDrawer"
-    >
-      <PlusIcon class="w-5 h-5" />
-      <span>Criar grupo</span>
-    </Button>
+  <div class="fixed bottom-24 left-0 right-0 z-40 flex justify-end pointer-events-none">
+    <div class="max-w-4xl mx-auto w-full px-6 pointer-events-auto flex justify-end">
+      <Button
+        variant="primary"
+        class="rounded-full px-6 py-3 flex items-center justify-center gap-2 shadow-lg text-white font-medium"
+        @click="openDrawer"
+      >
+        <PlusIcon class="w-5 h-5" />
+        <span>Criar grupo</span>
+      </Button>
+    </div>
   </div>
 
   <!-- Bottom Navigation -->

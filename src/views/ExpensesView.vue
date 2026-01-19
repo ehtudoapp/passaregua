@@ -264,13 +264,15 @@ function handleDeleteTransaction(transactionId: UUID) {
         </main>
 
         <!-- FAB Button -->
-        <div v-if="activeGroupId" class="fixed bottom-24 right-6 z-40">
-            <Button variant="primary"
-                class="rounded-full px-6 py-3 flex items-center justify-center gap-2 shadow-lg text-white font-medium"
-                @click="drawerOpen = true">
-                <PlusIcon class="w-5 h-5" />
-                <span>Adicionar despesa</span>
-            </Button>
+        <div v-if="activeGroupId" class="fixed bottom-24 left-0 right-0 z-40 flex justify-end pointer-events-none">
+            <div class="max-w-4xl mx-auto w-full px-6 pointer-events-auto flex justify-end">
+                <Button variant="primary"
+                    class="rounded-full px-6 py-3 flex items-center justify-center gap-2 shadow-lg text-white font-medium"
+                    @click="drawerOpen = true">
+                    <PlusIcon class="w-5 h-5" />
+                    <span>Adicionar despesa</span>
+                </Button>
+            </div>
         </div>
 
         <!-- Drawer for adding expense -->
