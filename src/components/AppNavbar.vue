@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { useRoute } from 'vue-router';
 import { 
   Bars3Icon, 
   BanknotesIcon, 
@@ -6,58 +7,57 @@ import {
   UserGroupIcon 
 } from '@heroicons/vue/24/solid';
 
-defineProps<{
-  activeNav: 'transactions' | 'totals' | 'settings' | 'groups';
-}>();
+const route = useRoute();
 
-defineEmits<{
-  'update:activeNav': [value: 'transactions' | 'totals' | 'settings' | 'groups'];
-}>();
+// Helper function to check if a route is active
+function isActiveRoute(path: string): boolean {
+  return route.path === path;
+}
 </script>
 
 <template>
   <nav class="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-50">
     <div class="flex justify-around max-w-4xl mx-auto">
-      <button
-        @click="$emit('update:activeNav', 'transactions')"
+      <router-link
+        to="/expenses"
         :class="[
           'flex-1 py-3 px-3 flex flex-col items-center gap-1 border-t-2 transition',
-          activeNav === 'transactions' ? 'border-emerald-700 text-emerald-700' : 'border-transparent text-gray-500 hover:text-gray-700'
+          isActiveRoute('/expenses') ? 'border-emerald-700 text-emerald-700' : 'border-transparent text-gray-500 hover:text-gray-700'
         ]"
       >
         <Bars3Icon class="w-6 h-6" />
         <p class="text-xs">Despesas</p>
-      </button>
-      <button
-        @click="$emit('update:activeNav', 'totals')"
+      </router-link>
+      <router-link
+        to="/balances"
         :class="[
           'flex-1 py-3 px-3 flex flex-col items-center gap-1 border-t-2 transition',
-          activeNav === 'totals' ? 'border-emerald-700 text-emerald-700' : 'border-transparent text-gray-500 hover:text-gray-700'
+          isActiveRoute('/balances') ? 'border-emerald-700 text-emerald-700' : 'border-transparent text-gray-500 hover:text-gray-700'
         ]"
       >
         <BanknotesIcon class="w-6 h-6" />
         <p class="text-xs">Saldos</p>
-      </button>
-      <button
-        @click="$emit('update:activeNav', 'settings')"
+      </router-link>
+      <router-link
+        to="/settings"
         :class="[
           'flex-1 py-3 px-3 flex flex-col items-center gap-1 border-t-2 transition',
-          activeNav === 'settings' ? 'border-emerald-700 text-emerald-700' : 'border-transparent text-gray-500 hover:text-gray-700'
+          isActiveRoute('/settings') ? 'border-emerald-700 text-emerald-700' : 'border-transparent text-gray-500 hover:text-gray-700'
         ]"
       >
         <Cog6ToothIcon class="w-6 h-6" />
         <p class="text-xs">Config</p>
-      </button>
-      <button
-        @click="$emit('update:activeNav', 'groups')"
+      </router-link>
+      <router-link
+        to="/groups"
         :class="[
           'flex-1 py-3 px-3 flex flex-col items-center gap-1 border-t-2 transition',
-          activeNav === 'groups' ? 'border-emerald-700 text-emerald-700' : 'border-transparent text-gray-500 hover:text-gray-700'
+          isActiveRoute('/groups') ? 'border-emerald-700 text-emerald-700' : 'border-transparent text-gray-500 hover:text-gray-700'
         ]"
       >
         <UserGroupIcon class="w-6 h-6" />
         <p class="text-xs">Grupos</p>
-      </button>
+      </router-link>
     </div>
   </nav>
 </template>

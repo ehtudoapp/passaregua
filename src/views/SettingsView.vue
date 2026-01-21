@@ -20,15 +20,6 @@ import {
 import { useActiveGroup } from '../composables/useActiveGroup';
 import { useCurrentUsername } from '../composables/useCurrentUsername';
 
-// Props and emits for navigation
-defineProps<{
-    activeNav: 'transactions' | 'totals' | 'settings' | 'groups';
-}>();
-
-defineEmits<{
-    'update:activeNav': [value: 'transactions' | 'totals' | 'settings' | 'groups'];
-}>();
-
 // State
 const { activeGroupId } = useActiveGroup();
 const { currentUsername, setCurrentUsername } = useCurrentUsername();
@@ -254,5 +245,5 @@ function handleSaveUsername() {
     </div>
 
     <!-- Bottom Navigation -->
-    <AppNavbar :activeNav="activeNav" @update:activeNav="$emit('update:activeNav', $event)" />
+    <AppNavbar />
 </template>
