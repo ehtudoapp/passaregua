@@ -197,11 +197,11 @@ function handleActivateGroup() {
             <p class="text-sm mt-2">Clique em "Criar grupo" para começar</p>
           </div>
 
-          <!-- Groups grid -->
-          <div v-if="groups.length > 0" class="grid gap-4 sm:grid-cols-2">
+          <!-- Groups list -->
+          <div v-if="groups.length > 0" class="p-4 space-y-3">
             <div v-for="group in groups" :key="group.id" :class="[
-              'bg-white rounded-lg border-2 p-4 hover:border-emerald-500 transition cursor-pointer',
-              activeGroupId === group.id ? 'border-emerald-500' : 'border-gray-200'
+              'bg-white rounded-lg border border-gray-200 p-4 shadow-sm cursor-pointer hover:shadow-md transition-shadow',
+              activeGroupId === group.id ? 'ring-2 ring-emerald-500' : ''
             ]" @click="openEditDrawer(group)">
               <div class="flex items-start justify-between">
                 <div class="flex-1">
