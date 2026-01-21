@@ -61,7 +61,7 @@ function openPaymentModal() {
 
 <template>
   <div class="min-h-screen flex flex-col bg-gray-50">
-    <AppHeader title="Passa a régua" />
+    <AppHeader :showActiveGroup="true" title="Passa a régua" />
 
     <!-- Main Content -->
     <main class="flex-1 px-4 py-6 pb-24">
@@ -82,14 +82,10 @@ function openPaymentModal() {
               <p>Nenhum membro neste grupo</p>
             </div>
             <div v-else class="space-y-2">
-              <div
-                v-for="balance in balances"
-                :key="balance.memberId"
-                :class="[
-                  'px-4 py-3 rounded-lg font-medium text-sm flex justify-between items-center',
-                  getBalanceClass(balance.balance)
-                ]"
-              >
+              <div v-for="balance in balances" :key="balance.memberId" :class="[
+                'px-4 py-3 rounded-lg font-medium text-sm flex justify-between items-center',
+                getBalanceClass(balance.balance)
+              ]">
                 <span>{{ balance.memberName }}</span>
                 <span class="font-bold">{{ formatBalance(balance.balance) }}</span>
               </div>
@@ -99,16 +95,14 @@ function openPaymentModal() {
           <!-- Transações Sugeridas Section -->
           <div class="mb-6">
             <h2 class="text-xl font-semibold text-gray-900 mb-4">Transações sugeridas</h2>
-            <div v-if="suggestedTransactions.length === 0" class="bg-emerald-50 border border-emerald-200 text-emerald-700 px-4 py-4 rounded-lg text-center text-sm">
+            <div v-if="suggestedTransactions.length === 0"
+              class="bg-emerald-50 border border-emerald-200 text-emerald-700 px-4 py-4 rounded-lg text-center text-sm">
               <p class="font-medium">✓ Tudo acertado!</p>
               <p class="text-xs mt-1">Nenhuma transação necessária</p>
             </div>
             <div v-else class="space-y-2">
-              <div
-                v-for="(transaction, index) in suggestedTransactions"
-                :key="index"
-                class="bg-sky-50 border border-sky-200 px-4 py-3 rounded-lg text-sm"
-              >
+              <div v-for="(transaction, index) in suggestedTransactions" :key="index"
+                class="bg-sky-50 border border-sky-200 px-4 py-3 rounded-lg text-sm">
                 <div class="flex items-center justify-between">
                   <div class="flex items-center gap-2">
                     <span class="font-semibold text-gray-900">{{ transaction.from }}</span>
@@ -138,11 +132,9 @@ function openPaymentModal() {
     <!-- FAB Button -->
     <div v-if="activeGroupId" class="fixed bottom-24 left-0 right-0 z-40 flex justify-end pointer-events-none">
       <div class="max-w-4xl mx-auto w-full px-6 pointer-events-auto flex justify-end">
-        <Button
-          variant="primary"
+        <Button variant="primary"
           class="rounded-full px-6 py-3 flex items-center justify-center gap-2 shadow-lg text-white font-medium"
-          @click="openPaymentModal"
-        >
+          @click="openPaymentModal">
           <BanknotesIcon class="w-5 h-5" />
           <span>Realizar pagamento</span>
         </Button>
@@ -153,10 +145,6 @@ function openPaymentModal() {
     <AppNavbar :activeNav="activeNav" @update:activeNav="$emit('update:activeNav', $event)" />
 
     <!-- Payment Modal -->
-    <NewPaymentModal
-      v-if="activeGroupId"
-      v-model="paymentModalOpen"
-      @payment-added="handlePaymentAdded"
-    />
+    <NewPaymentModal v-if="activeGroupId" v-model="paymentModalOpen" @payment-added="handlePaymentAdded" />
   </div>
 </template>

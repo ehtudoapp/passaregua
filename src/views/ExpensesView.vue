@@ -3,7 +3,6 @@ import { ref, watch, computed } from 'vue';
 import { UserGroupIcon, PlusIcon, TrashIcon } from '@heroicons/vue/24/solid';
 import type { UUID, TransactionRecord, Member } from '../types';
 import { useActiveGroup } from '../composables/useActiveGroup';
-import { useCurrentUsername } from '../composables/useCurrentUsername';
 import { getGroupMembers, getGroupTransactions, getMember, removeTransaction } from '../lib/storage';
 import AppHeader from '../components/AppHeader.vue';
 import AppNavbar from '../components/AppNavbar.vue';
@@ -82,7 +81,7 @@ function reloadTransactions() {
 
 <template>
     <div class="min-h-screen flex flex-col bg-gray-50">
-        <AppHeader title="Passa a régua" />
+        <AppHeader :showActiveGroup="true" title="Passa a régua"/>
 
         <!-- Main Content -->
         <main class="flex-1 px-4 py-6 pb-24">

@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { ref } from 'vue';
-import { 
-  XMarkIcon, 
-  PlusIcon, 
+import {
+  XMarkIcon,
+  PlusIcon,
   MinusIcon,
   UserGroupIcon,
   CheckCircleIcon
@@ -93,12 +93,12 @@ function validateGroupName(): boolean {
 function validateMembers(): boolean {
   let isValid = true;
   const names = new Set<string>();
-  
+
   memberInputs.value.forEach(input => {
     input.error = '';
     const trimmedName = input.name.trim();
     const lowerCaseName = trimmedName.toLowerCase();
-    
+
     if (trimmedName && names.has(lowerCaseName)) {
       input.error = 'Nome duplicado';
       isValid = false;
@@ -106,29 +106,29 @@ function validateMembers(): boolean {
       names.add(lowerCaseName);
     }
   });
-  
+
   return isValid;
 }
 
 function handleCreateGroup() {
   const nameValid = validateGroupName();
   const membersValid = validateMembers();
-  
+
   if (!nameValid || !membersValid) {
     return;
   }
-  
+
   // Get non-empty member names
   const members = memberInputs.value
     .map(input => input.name.trim())
     .filter(name => name !== '');
-  
+
   // Create group
   createGroup({
     nome: groupName.value.trim(),
     members
   });
-  
+
   // Reload groups and close drawer
   loadGroups();
   closeDrawer();
@@ -161,7 +161,7 @@ function handleSaveGroupName() {
   if (!validateEditGroupName() || !editingGroup.value) {
     return;
   }
-  
+
   try {
     updateGroupName(editingGroup.value.id, editGroupName.value.trim());
     loadGroups();
@@ -183,21 +183,22 @@ function handleActivateGroup() {
 <template>
   <div class="min-h-screen flex flex-col bg-gray-50">
     <!-- Header -->
-    <AppHeader title="Passa a régua" />
+    <AppHeader :showActiveGroup="true" title="Passa a régua" />
 
     <!-- Main Content -->
     <main class="flex-1 px-4 py-6 pb-24">
       <div class="max-w-xl mx-auto">
         <!-- Groups List -->
         <div class="space-y-4">
-          
+
           <!-- Alert when no active group -->
-          <div v-if="groups.length > 0 && activeGroupId === null" class="text-center py-8 text-amber-600 bg-amber-50 border border-amber-200 rounded-lg">
+          <div v-if="groups.length > 0 && activeGroupId === null"
+            class="text-center py-8 text-amber-600 bg-amber-50 border border-amber-200 rounded-lg">
             <CheckCircleIcon class="w-12 h-12 mx-auto mb-3 text-amber-400" />
             <p class="text-base font-medium">Nenhum grupo ativo</p>
             <p class="text-sm mt-1">Clique em um grupo abaixo e ative-o para começar</p>
           </div>
-          
+
           <!-- No groups message -->
           <div v-if="groups.length === 0" class="text-center py-12 text-gray-500">
             <UserGroupIcon class="w-16 h-16 mx-auto mb-4 text-gray-300" />
@@ -207,15 +208,10 @@ function handleActivateGroup() {
 
           <!-- Groups grid -->
           <div v-if="groups.length > 0" class="grid gap-4 sm:grid-cols-2">
-            <div
-              v-for="group in groups"
-              :key="group.id"
-              :class="[
-                'bg-white rounded-lg border-2 p-4 hover:border-emerald-500 transition cursor-pointer',
-                activeGroupId === group.id ? 'border-emerald-500' : 'border-gray-200'
-              ]"
-              @click="openEditDrawer(group)"
-            >
+            <div v-for="group in groups" :key="group.id" :class="[
+              'bg-white rounded-lg border-2 p-4 hover:border-emerald-500 transition cursor-pointer',
+              activeGroupId === group.id ? 'border-emerald-500' : 'border-gray-200'
+            ]" @click="openEditDrawer(group)">
               <div class="flex items-start justify-between">
                 <div class="flex-1">
                   <h3 class="text-lg font-semibold text-gray-900 mb-1">
@@ -223,7 +219,8 @@ function handleActivateGroup() {
                   </h3>
                   <p class="text-sm text-gray-600 flex items-center gap-1">
                     <UserGroupIcon class="w-4 h-4" />
-                    <span>{{ group.memberCount }} {{ group.memberCount === 1 ? 'participante' : 'participantes' }}</span>
+                    <span>{{ group.memberCount }} {{ group.memberCount === 1 ? 'participante' : 'participantes'
+                      }}</span>
                   </p>
                 </div>
               </div>
@@ -237,11 +234,9 @@ function handleActivateGroup() {
   <!-- FAB Button -->
   <div class="fixed bottom-24 left-0 right-0 z-40 flex justify-end pointer-events-none">
     <div class="max-w-4xl mx-auto w-full px-6 pointer-events-auto flex justify-end">
-      <Button
-        variant="primary"
+      <Button variant="primary"
         class="rounded-full px-6 py-3 flex items-center justify-center gap-2 shadow-lg text-white font-medium"
-        @click="openDrawer"
-      >
+        @click="openDrawer">
         <PlusIcon class="w-5 h-5" />
         <span>Criar grupo</span>
       </Button>
@@ -267,13 +262,8 @@ function handleActivateGroup() {
       <div class="border-b border-gray-200 pb-6">
         <h3 class="text-lg font-semibold text-gray-900 mb-4">Criar Grupo</h3>
         <div class="space-y-4">
-          <Input
-            v-model="groupName"
-            label="Nome do Grupo"
-            placeholder="Ex: Viagem à praia"
-            :error="groupNameError"
-            @blur="validateGroupName"
-          />
+          <Input v-model="groupName" label="Nome do Grupo" placeholder="Ex: Viagem à praia" :error="groupNameError"
+            @blur="validateGroupName" />
         </div>
       </div>
 
@@ -288,27 +278,14 @@ function handleActivateGroup() {
             </div>
           </Button>
         </div>
-        
+
         <div class="space-y-3">
-          <div
-            v-for="input in memberInputs"
-            :key="input.id"
-            class="flex items-start gap-2"
-          >
+          <div v-for="input in memberInputs" :key="input.id" class="flex items-start gap-2">
             <div class="flex-1">
-              <Input
-                v-model="input.name"
-                placeholder="Nome do membro"
-                :error="input.error"
-                @blur="validateMembers"
-              />
+              <Input v-model="input.name" placeholder="Nome do membro" :error="input.error" @blur="validateMembers" />
             </div>
-            <Button
-              variant="icon"
-              :disabled="memberInputs.length === 1"
-              @click="removeMemberInput(input.id)"
-              class="mt-1"
-            >
+            <Button variant="icon" :disabled="memberInputs.length === 1" @click="removeMemberInput(input.id)"
+              class="mt-1">
               <MinusIcon class="w-5 h-5 text-rose-500" />
             </Button>
           </div>
@@ -321,11 +298,7 @@ function handleActivateGroup() {
 
       <!-- Create Button -->
       <div class="sticky bottom-0 bg-white pt-4 border-t border-gray-200">
-        <Button
-          variant="primary"
-          class="w-full"
-          @click="handleCreateGroup"
-        >
+        <Button variant="primary" class="w-full" @click="handleCreateGroup">
           Criar Grupo
         </Button>
       </div>
@@ -348,13 +321,8 @@ function handleActivateGroup() {
       <div class="border-b border-gray-200 pb-6">
         <h3 class="text-lg font-semibold text-gray-900 mb-4">Editar Nome do Grupo</h3>
         <div class="space-y-4">
-          <Input
-            v-model="editGroupName"
-            label="Nome do Grupo"
-            placeholder="Ex: Viagem à praia"
-            :error="editGroupNameError"
-            @blur="validateEditGroupName"
-          />
+          <Input v-model="editGroupName" label="Nome do Grupo" placeholder="Ex: Viagem à praia"
+            :error="editGroupNameError" @blur="validateEditGroupName" />
         </div>
       </div>
 
@@ -364,26 +332,18 @@ function handleActivateGroup() {
         <p class="text-sm text-gray-600 mb-3">
           {{ activeGroupId === editingGroup?.id ? 'Este é o grupo ativo' : 'Clique abaixo para ativar este grupo' }}
         </p>
-        <Button
-          v-if="activeGroupId !== editingGroup?.id"
-          variant="primary"
-          class="w-full"
-          @click="handleActivateGroup"
-        >
+        <Button v-if="activeGroupId !== editingGroup?.id" variant="primary" class="w-full" @click="handleActivateGroup">
           Tornar o grupo ativo
         </Button>
-        <div v-else class="w-full px-4 py-2 bg-emerald-50 border border-emerald-200 rounded-lg text-emerald-700 text-sm text-center">
+        <div v-else
+          class="w-full px-4 py-2 bg-emerald-50 border border-emerald-200 rounded-lg text-emerald-700 text-sm text-center">
           ✓ Grupo ativo
         </div>
       </div>
 
       <!-- Save Button -->
       <div class="sticky bottom-0 bg-white pt-4 border-t border-gray-200">
-        <Button
-          variant="primary"
-          class="w-full"
-          @click="handleSaveGroupName"
-        >
+        <Button variant="primary" class="w-full" @click="handleSaveGroupName">
           Salvar Alterações
         </Button>
       </div>

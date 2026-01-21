@@ -147,7 +147,7 @@ function handleSaveUsername() {
 <template>
     <div class="min-h-screen flex flex-col bg-gray-50">
         <!-- Header -->
-        <AppHeader title="Passa a régua" />
+        <AppHeader :showActiveGroup="true" title="Passa a régua"/>
 
         <!-- Main Content -->
         <main class="flex-1 px-4 py-6 pb-24">
