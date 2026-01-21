@@ -152,26 +152,6 @@ function handleSaveUsername() {
         <!-- Main Content -->
         <main class="flex-1 px-4 py-6 pb-24">
             <div class="max-w-xl mx-auto space-y-6">
-                <!-- Active Group Name Header -->
-                <div v-if="activeGroupId">
-                    <h2 class="text-2xl font-semibold text-gray-900">{{ groupName }}</h2>
-                    <Transition
-                        enter-active-class="transition-all duration-300 ease-out"
-                        enter-from-class="opacity-0 scale-95"
-                        enter-to-class="opacity-100 scale-100"
-                        leave-active-class="transition-all duration-200 ease-in"
-                        leave-from-class="opacity-100 scale-100"
-                        leave-to-class="opacity-0 scale-95"
-                    >
-                        <div
-                            v-if="showIndicator"
-                            class="mt-3 inline-flex items-center gap-2 px-3 py-1 bg-emerald-50 border border-emerald-200 rounded-full"
-                        >
-                            <span class="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></span>
-                            <span class="text-emerald-700 text-xs font-medium">Grupo ativo</span>
-                        </div>
-                    </Transition>
-                </div>
 
                 <!-- Current User Section -->
                 <div class="bg-white rounded-lg border border-gray-200 p-6 space-y-4">
