@@ -8,15 +8,6 @@ import AppNavbar from '../components/AppNavbar.vue';
 import Button from '../components/Button.vue';
 import DrawerNewPaymentAdd from '../components/DrawerNewPaymentAdd.vue';
 
-// Props and emits for navigation
-defineProps<{
-  activeNav: 'transactions' | 'totals' | 'settings' | 'groups';
-}>();
-
-defineEmits<{
-  'update:activeNav': [value: 'transactions' | 'totals' | 'settings' | 'groups'];
-}>();
-
 // Composables
 const { activeGroupId } = useActiveGroup();
 const { balances, suggestedTransactions, totalExpenses, refresh } = useBalances();
@@ -142,7 +133,7 @@ function openPaymentModal() {
     </div>
 
     <!-- Bottom Navigation -->
-    <AppNavbar :activeNav="activeNav" @update:activeNav="$emit('update:activeNav', $event)" />
+    <AppNavbar />
 
     <!-- Payment Drawer -->
     <DrawerNewPaymentAdd v-if="activeGroupId" v-model="paymentModalOpen" @payment-added="handlePaymentAdded" />

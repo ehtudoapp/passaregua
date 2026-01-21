@@ -20,15 +20,6 @@ import {
 } from '../lib/storage';
 import { useActiveGroup } from '../composables/useActiveGroup';
 
-// Props and emits for navigation
-defineProps<{
-  activeNav: 'transactions' | 'totals' | 'settings' | 'groups';
-}>();
-
-defineEmits<{
-  'update:activeNav': [value: 'transactions' | 'totals' | 'settings' | 'groups'];
-}>();
-
 // State
 const drawerOpen = ref(false);
 const groupName = ref('');
@@ -244,7 +235,7 @@ function handleActivateGroup() {
   </div>
 
   <!-- Bottom Navigation -->
-  <AppNavbar :activeNav="activeNav" @update:activeNav="$emit('update:activeNav', $event)" />
+  <AppNavbar />
 
   <!-- Drawer for Adding Group -->
   <Drawer v-model="drawerOpen" position="right" width-class="w-full max-w-xl">

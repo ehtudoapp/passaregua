@@ -13,15 +13,6 @@ import DrawerExpenseDetails from '../components/DrawerExpenseDetails.vue';
 // Composables
 const { activeGroupId } = useActiveGroup();
 
-// Props and emits for navigation
-defineProps<{
-    activeNav: 'transactions' | 'totals' | 'settings' | 'groups';
-}>();
-
-defineEmits<{
-    'update:activeNav': [value: 'transactions' | 'totals' | 'settings' | 'groups'];
-}>();
-
 // State
 const drawerOpen = ref(false);
 const detailDrawerOpen = ref(false);
@@ -150,7 +141,7 @@ function reloadTransactions() {
     </div>
 
     <!-- Bottom Navigation -->
-    <AppNavbar :activeNav="activeNav" @update:activeNav="$emit('update:activeNav', $event)" />
+    <AppNavbar />
 </template>
 
 <style scoped>
