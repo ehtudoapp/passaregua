@@ -157,8 +157,8 @@
 
 ## 6. Detalhes
 - [x] Data ao lançar despesa já pegar a data atual
-- [ ] Mostrar o valor da divisão entre parenteses ao inserir despesa
+- [x] Mostrar o valor da divisão entre parenteses ao inserir despesa
 - [ ] Mostrar participantes no cartão de despesas
-- [ ] Divisão por porcentagem
-- [ ] Divisão por valor
-- [ ] Divisão por partes
+- [x] Divisão por porcentagem
+- [x] Divisão por valor
+- [x] Divisão por partes
