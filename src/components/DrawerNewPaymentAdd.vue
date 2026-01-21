@@ -18,7 +18,7 @@ const emit = defineEmits<{
 }>();
 
 const { activeGroupId } = useActiveGroup();
-const { currentUsername } = useCurrentUsername();
+const { currentUserId } = useCurrentUsername();
 
 // Form state
 const formData = ref({
@@ -60,13 +60,10 @@ watch(() => props.modelValue, (isOpen) => {
 });
 
 function resetForm() {
-  // Find the member ID for the current username
-  const currentMember = members.value.find(m => m.nome === currentUsername.value);
-  
   formData.value = {
     data: new Date().toISOString().split('T')[0],
     valor: '',
-    pagador_id: currentMember?.id || '',
+    pagador_id: currentUserId.value || '',
     recebedor_id: ''
   };
   errors.value = {
@@ -234,3 +231,10 @@ function handleSubmit() {
     </div>
   </Drawer>
 </template>
+
+<style scoped>
+:deep(.drawer-content) {
+  max-height: 100vh;
+  overflow-y: auto;
+}
+</style>

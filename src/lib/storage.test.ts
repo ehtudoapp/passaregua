@@ -2,6 +2,8 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 import {
   groupsStorage,
   membersStorage,
+  transactionsStorage,
+  splitsStorage,
   createGroup,
   getGroups,
   getGroup,
@@ -13,7 +15,12 @@ import {
   getGroupsWithMemberCount,
   getActiveGroupId,
   setActiveGroupId,
-  updateGroupName
+  updateGroupName,
+  createTransaction,
+  createSplit,
+  removeTransaction,
+  getTransactionSplits,
+  getTransaction
 } from './storage';
 
 // Mock localStorage
@@ -35,6 +42,8 @@ describe('Storage', () => {
     localStorageMock.clear();
     groupsStorage.clear();
     membersStorage.clear();
+    transactionsStorage.clear();
+    splitsStorage.clear();
   });
 
   describe('Group operations', () => {
@@ -265,6 +274,55 @@ describe('Storage', () => {
       expect(() => {
         updateGroupName(group.id, '');
       }).toThrow('Nome do grupo não pode ser vazio');
+    });
+  });
+
+  describe('Transaction operations', () => {
+    it('should remove a transaction', () => {
+      const group = createGroup({ nome: 'Test Group' });
+      const member = addMemberToGroup(group.id, 'Alice');
+      const transaction = createTransaction(
+        group.id,
+        'Test Expense',
+        1000,
+        '2024-01-01T00:00:00.000Z',
+        member.id
+      );
+
+      const removed = removeTransaction(transaction.id);
+      expect(removed).toBe(true);
+      expect(getTransaction(transaction.id)).toBeUndefined();
+    });
+
+    it('should remove all splits associated with a transaction', () => {
+      const group = createGroup({ nome: 'Test Group' });
+      const member1 = addMemberToGroup(group.id, 'Alice');
+      const member2 = addMemberToGroup(group.id, 'Bob');
+      const transaction = createTransaction(
+        group.id,
+        'Test Expense',
+        1000,
+        '2024-01-01T00:00:00.000Z',
+        member1.id
+      );
+
+      // Create splits for the transaction
+      createSplit(transaction.id, member1.id, 500);
+      createSplit(transaction.id, member2.id, 500);
+
+      // Verify splits exist
+      expect(getTransactionSplits(transaction.id)).toHaveLength(2);
+
+      // Remove transaction
+      removeTransaction(transaction.id);
+
+      // Verify splits are removed
+      expect(getTransactionSplits(transaction.id)).toHaveLength(0);
+    });
+
+    it('should return false when removing non-existent transaction', () => {
+      const removed = removeTransaction('non-existent-id');
+      expect(removed).toBe(false);
     });
   });
 });
