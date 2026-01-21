@@ -249,8 +249,8 @@ function handleActivateGroup() {
   <!-- Drawer for Adding Group -->
   <Drawer v-model="drawerOpen" position="right" width-class="w-full max-w-xl">
     <template #header="{ close }">
-      <div class="flex items-center justify-between px-6 py-4">
-        <h2 class="text-xl font-semibold text-gray-900">Novo Grupo</h2>
+      <div class="flex items-center justify-between px-4 py-4">
+        <h1 class="text-2xl font-bold text-gray-900">Novo Grupo</h1>
         <Button variant="icon" @click="close">
           <XMarkIcon class="w-6 h-6" />
         </Button>
@@ -308,8 +308,8 @@ function handleActivateGroup() {
   <!-- Drawer for Editing Group Name -->
   <Drawer v-model="editDrawerOpen" position="right" width-class="w-full max-w-xl">
     <template #header="{ close }">
-      <div class="flex items-center justify-between px-6 py-4">
-        <h2 class="text-xl font-semibold text-gray-900">Editar Grupo</h2>
+      <div class="flex items-center justify-between px-4 py-4">
+        <h1 class="text-2xl font-bold text-gray-900">Editar Grupo</h1>
         <Button variant="icon" @click="close">
           <XMarkIcon class="w-6 h-6" />
         </Button>

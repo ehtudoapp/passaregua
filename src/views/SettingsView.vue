@@ -108,7 +108,8 @@ function handleRemoveMember(memberId: string) {
 }
 
 function startEditUsername() {
-    usernameInput.value = currentUsername.value || '';
+    const { currentUserId } = useCurrentUsername();
+    usernameInput.value = currentUserId.value || '';
     usernameError.value = '';
     editingUsername.value = true;
 }
@@ -136,6 +137,7 @@ function handleSaveUsername() {
         return;
     }
 
+    // usernameInput agora contém o ID do membro
     setCurrentUsername(usernameInput.value.trim());
     editingUsername.value = false;
     usernameInput.value = '';
@@ -152,62 +154,6 @@ function handleSaveUsername() {
         <!-- Main Content -->
         <main class="flex-1 px-4 py-6 pb-24">
             <div class="max-w-xl mx-auto space-y-6">
-
-                <!-- Current User Section -->
-                <div class="bg-white rounded-lg border border-gray-200 p-6 space-y-4">
-                    <div class="flex items-center gap-3 mb-4">
-                        <UserIcon class="w-5 h-5 text-gray-600" />
-                        <h3 class="text-lg font-semibold text-gray-900">Usuário do Dispositivo</h3>
-                    </div>
-
-                    <!-- Display Mode -->
-                    <div v-if="!editingUsername" class="space-y-3">
-                        <div class="px-4 py-3 bg-gray-50 rounded-lg border border-gray-200">
-                            <p v-if="currentUsername" class="text-gray-900 font-medium">
-                                {{ currentUsername }}
-                            </p>
-                            <p v-else class="text-gray-500 italic">
-                                Nenhum usuário configurado
-                            </p>
-                        </div>
-                        <Button variant="primary" class="w-full" @click="startEditUsername">
-                            {{ currentUsername ? 'Alterar Usuário' : 'Configurar Usuário' }}
-                        </Button>
-                    </div>
-
-                    <!-- Edit Mode -->
-                    <div v-else class="space-y-3">
-                        <!-- Show member list if group is active -->
-                        <div v-if="activeGroupId && members.length > 0" class="space-y-2">
-                            <label class="block text-sm font-medium text-gray-700">Selecionar membro do grupo</label>
-                            <select v-model="usernameInput"
-                                class="w-full px-3 py-2 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-emerald-500 transition text-sm bg-white text-gray-900">
-                                <option value="">-- Escolher membro --</option>
-                                <option v-for="member in members" :key="member.id" :value="member.nome">
-                                    {{ member.nome }}
-                                </option>
-                            </select>
-                            <p v-if="usernameError" class="text-sm text-red-600">{{ usernameError }}</p>
-                        </div>
-
-                        <!-- No group active -->
-                        <div v-else class="text-center py-6 text-gray-500">
-                            <p class="text-sm">Nenhum grupo ativo com membros</p>
-                            <p class="text-xs mt-1">Acesse a aba "Grupos" para ativar um grupo</p>
-                        </div>
-
-                        <div class="flex gap-2">
-                            <Button variant="primary" class="flex-1" @click="handleSaveUsername"
-                                :disabled="!usernameInput.trim() || !activeGroupId">
-                                Salvar
-                            </Button>
-                            <Button variant="secondary" class="flex-1" @click="cancelEditUsername">
-                                Cancelar
-                            </Button>
-                        </div>
-                    </div>
-                </div>
-
                 <!-- No Active Group Message -->
                 <div v-if="!activeGroupId" class="text-center py-12 text-gray-500">
                     <UserGroupIcon class="w-16 h-16 mx-auto mb-4 text-gray-300" />
@@ -217,6 +163,54 @@ function handleSaveUsername() {
 
                 <!-- Active Group Content -->
                 <div v-else class="space-y-6">
+                    <!-- Current User Section -->
+                    <div class="bg-white rounded-lg border border-gray-200 p-6 space-y-4">
+                        <div class="flex items-center gap-3 mb-4">
+                            <UserIcon class="w-5 h-5 text-gray-600" />
+                            <h3 class="text-lg font-semibold text-gray-900">Usuário do Dispositivo</h3>
+                        </div>
+
+                        <!-- Display Mode -->
+                        <div v-if="!editingUsername" class="space-y-3">
+                            <div class="px-4 py-3 bg-gray-50 rounded-lg border border-gray-200">
+                                <p v-if="currentUsername" class="text-gray-900 font-medium">
+                                    {{ currentUsername }}
+                                </p>
+                                <p v-else class="text-gray-500 italic">
+                                    Nenhum usuário configurado
+                                </p>
+                            </div>
+                            <Button variant="primary" class="w-full" @click="startEditUsername">
+                                {{ currentUsername ? 'Alterar Usuário' : 'Configurar Usuário' }}
+                            </Button>
+                        </div>
+
+                        <!-- Edit Mode -->
+                        <div v-else class="space-y-3">
+                            <div class="space-y-2">
+                                <label class="block text-sm font-medium text-gray-700">Selecionar membro do grupo</label>
+                                <select v-model="usernameInput"
+                                    class="w-full px-3 py-2 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-emerald-500 transition text-sm bg-white text-gray-900">
+                                    <option value="">-- Escolher membro --</option>
+                                    <option v-for="member in members" :key="member.id" :value="member.id">
+                                        {{ member.nome }}
+                                    </option>
+                                </select>
+                                <p v-if="usernameError" class="text-sm text-red-600">{{ usernameError }}</p>
+                            </div>
+
+                            <div class="flex gap-2">
+                                <Button variant="primary" class="flex-1" @click="handleSaveUsername"
+                                    :disabled="!usernameInput.trim()">
+                                    Salvar
+                                </Button>
+                                <Button variant="secondary" class="flex-1" @click="cancelEditUsername">
+                                    Cancelar
+                                </Button>
+                            </div>
+                        </div>
+                    </div>
+
                     <!-- Members Section -->
                     <div class="bg-white rounded-lg border border-gray-200 p-6 space-y-6">
                         <div>
@@ -253,8 +247,6 @@ function handleSaveUsername() {
                                 <p class="text-sm">Nenhum membro adicionado ainda</p>
                             </div>
                         </div>
-
-
                     </div>
                 </div>
             </div>

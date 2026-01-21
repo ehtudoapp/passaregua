@@ -185,6 +185,33 @@ export function setCurrentUsername(username: string | null): void {
   }
 }
 
+export function getCurrentUserId(): string | null {
+  try {
+    const storage = getStorage();
+    if (storage) {
+      return storage.getItem('pr:currentUserId');
+    }
+  } catch (e) {
+    // Handle cases where localStorage might not be available
+  }
+  return null;
+}
+
+export function setCurrentUserId(userId: string | null): void {
+  try {
+    const storage = getStorage();
+    if (storage) {
+      if (userId === null || userId.trim() === '') {
+        storage.removeItem('pr:currentUserId');
+      } else {
+        storage.setItem('pr:currentUserId', userId.trim());
+      }
+    }
+  } catch (e) {
+    // Handle cases where localStorage might not be available
+  }
+}
+
 // Transaction utility functions
 export function createTransaction(
   groupId: UUID,

@@ -27,7 +27,7 @@ const emit = defineEmits<{
   'expense-added': [];
 }>();
 
-const { currentUsername } = useCurrentUsername();
+const { currentUsername, currentUserId } = useCurrentUsername();
 
 const formData = ref({
   descricao: '',
@@ -170,13 +170,11 @@ function handleDivisionErrorUpdate(error: string) {
 }
 
 function resetForm() {
-  const currentMember = members.find(m => m.nome === currentUsername.value);
-
   formData.value = {
     descricao: '',
     valor: '',
     data: new Date().toISOString().split('T')[0],
-    pagador_id: currentMember?.id || '',
+    pagador_id: currentUserId.value || '',
     participantes_ids: [],
     divisionType: 'equal',
     divisionDetails: new Map()
@@ -196,8 +194,8 @@ function resetForm() {
 <template>
   <Drawer :modelValue="modelValue" position="right" width-class="w-full max-w-xl" @update:modelValue="(v) => emit('update:modelValue', v)">
     <template #header="{ close }">
-      <div class="flex items-center justify-between px-6 py-4">
-        <h2 class="text-xl font-semibold text-gray-900">Nova despesa</h2>
+      <div class="flex items-center justify-between px-4 py-4">
+        <h1 class="text-2xl font-bold text-gray-900">Nova despesa</h1>
         <Button variant="icon" @click="close">
           <XMarkIcon class="w-6 h-6" />
         </Button>

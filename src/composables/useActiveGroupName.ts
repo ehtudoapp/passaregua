@@ -7,10 +7,10 @@ export function useActiveGroupName() {
 
   const activeGroupName = computed(() => {
     if (!activeGroupId.value) {
-      return 'Passa a régua';
+      return null;
     }
     const group = getGroup(activeGroupId.value);
-    return group?.nome || 'Passa a régua';
+    return group?.nome || null;
   });
 
   return {

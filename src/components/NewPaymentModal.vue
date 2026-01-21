@@ -155,8 +155,8 @@ function handleSubmit() {
 <template>
   <Drawer :model-value="modelValue" @update:model-value="$emit('update:modelValue', $event)" position="right" width-class="w-full max-w-xl">
     <template #header="{ close }">
-      <div class="flex items-center justify-between px-6 py-4">
-        <h2 class="text-xl font-semibold text-gray-900">Novo pagamento</h2>
+      <div class="flex items-center justify-between px-4 py-4">
+        <h1 class="text-2xl font-bold text-gray-900">Novo pagamento</h1>
         <Button variant="icon" @click="close">
           <XMarkIcon class="w-6 h-6" />
         </Button>

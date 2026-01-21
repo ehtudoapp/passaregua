@@ -18,7 +18,7 @@ const emit = defineEmits<{
 }>();
 
 const { activeGroupId } = useActiveGroup();
-const { currentUsername } = useCurrentUsername();
+const { currentUsername, currentUserId } = useCurrentUsername();
 
 // Form state
 const formData = ref({
@@ -60,13 +60,10 @@ watch(() => props.modelValue, (isOpen) => {
 });
 
 function resetForm() {
-  // Find the member ID for the current username
-  const currentMember = members.value.find(m => m.nome === currentUsername.value);
-  
   formData.value = {
     data: new Date().toISOString().split('T')[0],
     valor: '',
-    pagador_id: currentMember?.id || '',
+    pagador_id: currentUserId.value || '',
     recebedor_id: ''
   };
   errors.value = {
@@ -155,8 +152,8 @@ function handleSubmit() {
 <template>
   <Drawer :model-value="modelValue" @update:model-value="$emit('update:modelValue', $event)" position="right" width-class="w-full max-w-xl">
     <template #header="{ close }">
-      <div class="flex items-center justify-between px-6 py-4">
-        <h2 class="text-xl font-semibold text-gray-900">Novo pagamento</h2>
+      <div class="flex items-center justify-between px-4 py-4">
+        <h1 class="text-2xl font-bold text-gray-900">Novo pagamento</h1>
         <Button variant="icon" @click="close">
           <XMarkIcon class="w-6 h-6" />
         </Button>
