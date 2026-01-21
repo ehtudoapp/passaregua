@@ -1,13 +1,14 @@
 <script setup lang="ts">
 import { ref, watch, computed } from 'vue';
-import { UserGroupIcon, PlusIcon, TrashIcon } from '@heroicons/vue/24/solid';
+import { UserGroupIcon, PlusIcon } from '@heroicons/vue/24/solid';
 import type { UUID, TransactionRecord, Member } from '../types';
 import { useActiveGroup } from '../composables/useActiveGroup';
-import { getGroupMembers, getGroupTransactions, getMember, removeTransaction } from '../lib/storage';
+import { getGroupMembers, getGroupTransactions, getMember } from '../lib/storage';
 import AppHeader from '../components/AppHeader.vue';
 import AppNavbar from '../components/AppNavbar.vue';
 import Button from '../components/Button.vue';
 import DrawerExpenseAdd from '../components/DrawerExpenseAdd.vue';
+import DrawerExpenseDetails from '../components/DrawerExpenseDetails.vue';
 
 // Composables
 const { activeGroupId } = useActiveGroup();
@@ -23,6 +24,8 @@ defineEmits<{
 
 // State
 const drawerOpen = ref(false);
+const detailDrawerOpen = ref(false);
+const selectedTransactionId = ref<UUID | null>(null);
 const members = ref<Member[]>([]);
 const transactions = ref<TransactionRecord[]>([]);
 
@@ -63,15 +66,6 @@ const formatDate = (isoDate: string): string => {
 
 // (Form logic moved to `DrawerExpenseAdd` component)
 
-function handleDeleteTransaction(transactionId: UUID) {
-    if (confirm('Tem certeza que deseja excluir esta despesa?')) {
-        removeTransaction(transactionId);
-        if (activeGroupId.value) {
-            transactions.value = getGroupTransactions(activeGroupId.value);
-        }
-    }
-}
-
 function reloadTransactions() {
     if (activeGroupId.value) {
         transactions.value = getGroupTransactions(activeGroupId.value);
@@ -104,22 +98,16 @@ function reloadTransactions() {
 
                         <div v-else class="p-4 space-y-3">
                             <div v-for="transaction in sortedTransactions" :key="transaction.id"
-                                class="bg-white rounded-lg border border-gray-200 p-4 shadow-sm">
+                                class="bg-white rounded-lg border border-gray-200 p-4 shadow-sm cursor-pointer hover:shadow-md transition-shadow"
+                                @click="selectedTransactionId = transaction.id; detailDrawerOpen = true">
                                 <div class="flex justify-between items-start mb-2">
                                     <div class="flex-1">
                                         <h3 class="font-semibold text-gray-900">{{ transaction.descricao }}</h3>
                                         <p class="text-sm text-gray-500">{{ formatDate(transaction.data) }}</p>
                                     </div>
-                                    <div class="flex items-center gap-2">
-                                        <div class="text-right">
-                                            <p class="font-bold text-emerald-700">{{ formatCurrency(transaction.valor_total)
-                                            }}</p>
-                                        </div>
-                                        <Button variant="danger" @click="handleDeleteTransaction(transaction.id)"
-                                            :aria-label="`Excluir despesa ${transaction.descricao}`"
-                                            title="Excluir despesa">
-                                            <TrashIcon class="w-4 h-4" />
-                                        </Button>
+                                    <div class="text-right">
+                                        <p class="font-bold text-emerald-700">{{ formatCurrency(transaction.valor_total)
+                                        }}</p>
                                     </div>
                                 </div>
                                 <p class="text-sm text-gray-600">Pago por: <span class="font-medium">{{
@@ -144,13 +132,21 @@ function reloadTransactions() {
         </div>
 
         <!-- Drawer for adding expense -->
-                <DrawerExpenseAdd
-                    v-if="activeGroupId"
-                    v-model="drawerOpen"
-                    :members="members"
-                    :activeGroupId="activeGroupId"
-                    @expense-added="reloadTransactions"
-                />
+        <DrawerExpenseAdd
+            v-if="activeGroupId"
+            v-model="drawerOpen"
+            :members="members"
+            :activeGroupId="activeGroupId"
+            @expense-added="reloadTransactions"
+        />
+
+        <!-- Drawer for expense details -->
+        <DrawerExpenseDetails
+            v-model="detailDrawerOpen"
+            :transactionId="selectedTransactionId"
+            :activeGroupId="activeGroupId"
+            @transaction-deleted="reloadTransactions"
+        />
     </div>
 
     <!-- Bottom Navigation -->

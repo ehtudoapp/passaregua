@@ -6,7 +6,7 @@ import { useBalances } from '../composables/useBalances';
 import AppHeader from '../components/AppHeader.vue';
 import AppNavbar from '../components/AppNavbar.vue';
 import Button from '../components/Button.vue';
-import NewPaymentModal from '../components/NewPaymentModal.vue';
+import DrawerNewPaymentAdd from '../components/DrawerNewPaymentAdd.vue';
 
 // Props and emits for navigation
 defineProps<{
@@ -144,7 +144,7 @@ function openPaymentModal() {
     <!-- Bottom Navigation -->
     <AppNavbar :activeNav="activeNav" @update:activeNav="$emit('update:activeNav', $event)" />
 
-    <!-- Payment Modal -->
-    <NewPaymentModal v-if="activeGroupId" v-model="paymentModalOpen" @payment-added="handlePaymentAdded" />
+    <!-- Payment Drawer -->
+    <DrawerNewPaymentAdd v-if="activeGroupId" v-model="paymentModalOpen" @payment-added="handlePaymentAdded" />
   </div>
 </template>
