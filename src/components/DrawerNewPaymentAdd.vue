@@ -18,7 +18,7 @@ const emit = defineEmits<{
 }>();
 
 const { activeGroupId } = useActiveGroup();
-const { currentUsername, currentUserId } = useCurrentUsername();
+const { currentUserId } = useCurrentUsername();
 
 // Form state
 const formData = ref({

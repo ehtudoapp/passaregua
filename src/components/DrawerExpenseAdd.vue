@@ -27,7 +27,7 @@ const emit = defineEmits<{
   'expense-added': [];
 }>();
 
-const { currentUsername, currentUserId } = useCurrentUsername();
+const { currentUserId } = useCurrentUsername();
 
 const formData = ref({
   descricao: '',
