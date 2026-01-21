@@ -75,7 +75,7 @@ function reloadTransactions() {
 
 <template>
     <div class="min-h-screen flex flex-col bg-gray-50">
-        <AppHeader :showActiveGroup="true" title="Passa a régua"/>
+        <AppHeader :showActiveGroup="true"/>
 
         <!-- Main Content -->
         <main class="flex-1 px-4 py-6 pb-24">
