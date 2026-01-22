@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "dev:pb": "node scripts/pocketbase.js",
     "build": "vue-tsc && vite build",
     "preview": "vite preview",
     "test": "vitest"
