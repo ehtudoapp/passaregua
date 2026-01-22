@@ -70,6 +70,9 @@ export function createGroup(data: { nome: string; members?: string[] }): Group {
     });
   }
   
+  // Definir como grupo ativo automaticamente
+  setActiveGroupStorage(group.id);
+  
   return group;
 }
 
@@ -411,6 +414,11 @@ export function getTransactionSplits(transactionId: UUID): Split[] {
 
 export function getSplit(id: UUID): Split | undefined {
   return splitsStorage.get(id);
+}
+
+export function memberHasSplits(memberId: UUID): boolean {
+  const allSplits = splitsStorage.all();
+  return allSplits.some(split => split.member_id === memberId);
 }
 
 export function updateSplit(id: UUID, patch: Partial<Split>): Split | undefined {

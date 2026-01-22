@@ -5,7 +5,7 @@ import {
   clearCompletedChanges
 } from './localStorage';
 import { syncCreate, syncUpdate, syncDelete, pullCollection, parseServerTimestamp } from './pocketbase';
-import { groupsStorage, membersStorage, transactionsStorage, splitsStorage } from './storage';
+import { groupsStorage, membersStorage, transactionsStorage, splitsStorage, getActiveGroupId } from './storage';
 import type { PendingChange } from '../types';
 
 const MAX_RETRIES = 3;
@@ -121,23 +121,30 @@ export class SyncService {
 
   async pullRemoteData(): Promise<void> {
     try {
-      // Pull groups
-      const remoteGroups = await pullCollection<any>('groups');
+      const activeGroupId = getActiveGroupId();
+      
+      if (!activeGroupId) {
+        console.log('No active group set, skipping pull');
+        return;
+      }
+
+      // Pull apenas o grupo ativo
+      const remoteGroups = await pullCollection<any>('groups', `id="${activeGroupId}"`);
       await this.mergeCollection('groups', remoteGroups, groupsStorage);
 
-      // Pull members
-      const remoteMembers = await pullCollection<any>('members');
+      // Pull apenas membros do grupo ativo
+      const remoteMembers = await pullCollection<any>('members', `group_id="${activeGroupId}"`);
       await this.mergeCollection('members', remoteMembers, membersStorage);
 
-      // Pull transactions
-      const remoteTransactions = await pullCollection<any>('transactions');
+      // Pull apenas transações do grupo ativo
+      const remoteTransactions = await pullCollection<any>('transactions', `group_id="${activeGroupId}"`);
       await this.mergeCollection('transactions', remoteTransactions, transactionsStorage);
 
-      // Pull splits
-      const remoteSplits = await pullCollection<any>('splits');
+      // Pull apenas splits das transações do grupo ativo
+      const remoteSplits = await pullCollection<any>('splits', `transaction_id.group_id="${activeGroupId}"`);
       await this.mergeCollection('splits', remoteSplits, splitsStorage);
 
-      console.log('Remote data pulled successfully');
+      console.log('Remote data pulled successfully for group:', activeGroupId);
     } catch (error) {
       console.error('Failed to pull remote data:', error);
       throw error;
@@ -168,11 +175,45 @@ export class SyncService {
     });
   }
 
-  async fullSync(): Promise<void> {
-    // Primeiro pull dados remotos
-    await this.pullRemoteData();
+  async pullSpecificGroup(groupId: string): Promise<void> {
+    try {
+      console.log('Pulling specific group:', groupId);
 
-    // Depois push mudanças locais
+      // Pull o grupo específico
+      const remoteGroups = await pullCollection<any>('groups', `id="${groupId}"`);
+      if (remoteGroups.length === 0) {
+        throw new Error('Grupo não encontrado no servidor');
+      }
+      await this.mergeCollection('groups', remoteGroups, groupsStorage);
+
+      // Pull membros do grupo
+      const remoteMembers = await pullCollection<any>('members', `group_id="${groupId}"`);
+      await this.mergeCollection('members', remoteMembers, membersStorage);
+
+      // Pull transações do grupo
+      const remoteTransactions = await pullCollection<any>('transactions', `group_id="${groupId}"`);
+      await this.mergeCollection('transactions', remoteTransactions, transactionsStorage);
+
+      // Pull splits das transações
+      const remoteSplits = await pullCollection<any>('splits', `transaction_id.group_id="${groupId}"`);
+      await this.mergeCollection('splits', remoteSplits, splitsStorage);
+
+      console.log('Specific group imported successfully:', groupId);
+    } catch (error) {
+      console.error('Failed to pull specific group:', error);
+      throw error;
+    }
+  }
+
+  async fullSync(): Promise<void> {
+    // Primeiro pull dados remotos (se houver grupo ativo)
+    try {
+      await this.pullRemoteData();
+    } catch (error) {
+      console.warn('Pull skipped or failed:', error);
+    }
+
+    // Depois push mudanças locais (sempre tenta)
     await this.processPendingChanges();
   }
 

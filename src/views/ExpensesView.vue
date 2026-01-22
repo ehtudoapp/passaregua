@@ -52,7 +52,8 @@ const formatCurrency = (cents: number): string => {
 
 const formatDate = (isoDate: string): string => {
     // Parse only the date part to avoid timezone issues
-    const datePart = isoDate.split('T')[0];
+    // Handle both ISO format (YYYY-MM-DDTHH:MM:SS) and PocketBase format (YYYY-MM-DD HH:MM:SS)
+    const datePart = isoDate.split('T')[0].split(' ')[0];
     const [year, month, day] = datePart.split('-').map(Number);
     return `${day.toString().padStart(2, '0')}/${month.toString().padStart(2, '0')}/${year}`;
 };
