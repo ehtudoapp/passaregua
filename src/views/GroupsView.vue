@@ -19,6 +19,7 @@ import {
   updateGroupName
 } from '../lib/storage';
 import { useActiveGroup } from '../composables/useActiveGroup';
+import { useSyncStatus } from '../composables/useSyncStatus';
 
 // State
 const drawerOpen = ref(false);
@@ -31,6 +32,7 @@ const nextMemberId = ref(2);
 
 const groups = ref<GroupWithCount[]>([]);
 const { activeGroupId, setActiveGroupId } = useActiveGroup();
+const { triggerSync } = useSyncStatus();
 
 // Edit drawer state
 const editDrawerOpen = ref(false);
@@ -123,6 +125,9 @@ function handleCreateGroup() {
   // Reload groups and close drawer
   loadGroups();
   closeDrawer();
+  
+  // Sincronizar imediatamente
+  triggerSync();
 }
 
 function openEditDrawer(group: GroupWithCount) {

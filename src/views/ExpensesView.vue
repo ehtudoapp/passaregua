@@ -3,6 +3,7 @@ import { ref, watch, computed } from 'vue';
 import { UserGroupIcon, PlusIcon } from '@heroicons/vue/24/solid';
 import type { UUID, TransactionRecord, Member } from '../types';
 import { useActiveGroup } from '../composables/useActiveGroup';
+import { useSyncStatus } from '../composables/useSyncStatus';
 import { getGroupMembers, getGroupTransactions, getMember } from '../lib/storage';
 import AppHeader from '../components/AppHeader.vue';
 import AppNavbar from '../components/AppNavbar.vue';
@@ -12,6 +13,7 @@ import DrawerExpenseDetails from '../components/DrawerExpenseDetails.vue';
 
 // Composables
 const { activeGroupId } = useActiveGroup();
+const { triggerSync } = useSyncStatus();
 
 // State
 const drawerOpen = ref(false);
@@ -61,6 +63,7 @@ function reloadTransactions() {
     if (activeGroupId.value) {
         transactions.value = getGroupTransactions(activeGroupId.value);
     }
+    triggerSync();
 }
 </script>
 

@@ -3,6 +3,7 @@ import { ref, watch, computed } from 'vue';
 import { XMarkIcon, TrashIcon } from '@heroicons/vue/24/solid';
 import type { UUID, TransactionRecord, Split, Member } from '../types';
 import { getTransaction, getTransactionSplits, getMember, removeTransaction } from '../lib/storage';
+import { useSyncStatus } from '../composables/useSyncStatus';
 import Drawer from './Drawer.vue';
 import Button from './Button.vue';
 
@@ -22,6 +23,7 @@ const emit = defineEmits<{
 const transaction = ref<TransactionRecord | null>(null);
 const splits = ref<Split[]>([]);
 const payer = ref<Member | null>(null);
+const { triggerSync } = useSyncStatus();
 
 // Load transaction details when transactionId or drawer opens
 watch(
@@ -89,6 +91,7 @@ function handleDelete() {
   if (props.transactionId) {
     removeTransaction(props.transactionId);
     handleClose();
+    triggerSync();
     emit('transaction-deleted');
   }
 }
