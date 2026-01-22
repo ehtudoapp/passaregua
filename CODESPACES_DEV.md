@@ -1,96 +1,95 @@
 # Desenvolvimento no GitHub Codespaces
 
-## ✅ Ambiente Configurado
+## 🚨 Problema Comum: "Não Funciona"
 
-### Backend (PocketBase)
-- **Status**: ✅ Rodando na porta 8090
-- **URL Local**: `http://localhost:8090`
-- **URL Codespaces**: `https://silver-space-trout-5x7p4gw9gvhpvx6-8090.app.github.dev/`
+### Checklist de Verificação:
 
-### Frontend (Vite/Vue)
-- **Porta**: 5173 (ou 5174 se 5173 estiver ocupada)
-- **Configuração**: Proxy configurado para `/api` → Backend
-- **Status Atual**: ✅ Rodando em http://localhost:5174/
+1. **✅ PocketBase está rodando?**
+   ```bash
+   ps aux | grep pocketbase
+   ```
+   Se NÃO aparecer processo, iniciar:
+   ```bash
+   npm run dev:pb
+   ```
 
-## 🚀 Como Iniciar o Desenvolvimento
+2. **✅ Vite está rodando?**
+   ```bash
+   ps aux | grep vite
+   ```
+   Se NÃO aparecer processo, iniciar:
+   ```bash
+   npm run dev
+   ```
 
-### 1. Verificar se o Backend está rodando
-```bash
-ps aux | grep pocketbase
+3. **✅ Verificar logs do console do navegador**
+   - Abra as DevTools (F12)
+   - Aba Console
+   - Procure por: "🔌 PocketBase URL:"
+   - Deve mostrar: `http://localhost:8090`
+
+4. **✅ Testar conexão direta com backend**
+   Abra em uma nova aba do navegador:
+   ```
+   http://localhost:8090/_/
+   ```
+   Se funcionar, o backend está OK!
+
+5. **✅ Página de diagnóstico**
+   Acesse: `http://localhost:5174/diagnostico.html`
+   (ou a porta que o Vite mostrou)
+
+## 🔧 Configuração Correta
+
+### Arquivo `.env`
 ```
+VITE_BACKEND_URL=http://localhost:8090
+```
+**IMPORTANTE**: SEM barra no final!
 
-Se não estiver rodando:
+### No Codespaces
+- Use SEMPRE `localhost` (não URLs do Codespaces)
+- O port forwarding é feito automaticamente
+- Certifique-se que as portas 8090 e 5174 estão com visibilidade "Public" na aba PORTS
+
+## 🐛 Soluções para Problemas Comuns
+
+### "404 ao carregar dados"
+**Causa**: PocketBase não está rodando
+**Solução**:
 ```bash
+pkill -f pocketbase
 npm run dev:pb
 ```
 
-### 2. Iniciar o Frontend
-Em um novo terminal:
+### "CORS error" ou "Failed to fetch"
+**Causa**: Configuração de porta no Codespaces
+**Solução**:
+1. Abra a aba "PORTS" no VS Code
+2. Encontre a porta 8090
+3. Clique com botão direito → "Port Visibility" → "Public"
+4. Faça o mesmo para porta 5174
+
+### "Nenhum dado aparece"
+**Causa**: Banco de dados vazio
+**Solução**:
+1. Acesse: http://localhost:8090/_/
+2. Faça login (admin@admin.com / adminadmin123)
+3. Crie um grupo de teste manualmente
+4. Recarregue a aplicação
+
+### "import.meta.env.VITE_BACKEND_URL é undefined"
+**Causa**: Servidor não reiniciado após mudar .env
+**Solução**:
 ```bash
+# Parar o Vite (Ctrl+C no terminal)
+# Reiniciar
 npm run dev
 ```
 
-### 3. Acessar a aplicação
-- O Codespaces vai automaticamente fazer o port forwarding
-- Acesse a URL que aparecer no terminal (porta 5173)
-- O VS Code vai mostrar uma notificação com o link
+## 📝 Notas Importantes
 
-## 🔧 Variáveis de Ambiente
-
-O arquivo `.env` está configurado com:
-```
-VITE_BACKEND_URL=https://silver-space-trout-5x7p4gw9gvhpvx6-8090.app.github.dev/
-```
-
-**Importante**: No Codespaces, use sempre a URL completa do backend (com HTTPS) para evitar problemas de CORS.
-
-## 🛠️ Comandos Úteis
-
-```bash
-# Build do projeto
-npm run build
-
-# Preview do build
-npm run preview
-
-# Testes
-npm test
-
-# Verificar status dos processos
-ps aux | grep -E 'pocketbase|vite'
-
-# Verificar portas abertas
-netstat -tulpn | grep LISTEN
-```
-
-## 🐛 Troubleshooting
-
-### Problema: Backend não responde
-**Solução**: Reiniciar o PocketBase
-```bash
-# Matar processo
-pkill -f pocketbase
-
-# Iniciar novamente
-npm run dev:pb
-```
-
-### Problema: Erro de CORS
-**Solução**: Verificar se está usando a URL correta do Codespaces no `.env`
-
-### Problema: Porta já em uso
-**Solução**: 
-```bash
-# Encontrar processo usando a porta
-lsof -i :5173
-lsof -i :8090
-
-# Matar processo específico
-kill -9 <PID>
-```
-
-## 📝 Notas do Codespaces
-
-- As URLs do Codespaces mudam a cada sessão
-- Configure o port forwarding como público se precisar compartilhar
-- O Codespaces hiberna após inatividade - os processos precisam ser reiniciados
+- **NUNCA** use URLs do Codespaces (*.github.dev) no `.env`
+- **SEMPRE** use `localhost` para desenvolvimento local
+- O Codespaces faz port forwarding automaticamente
+- Reinicie o Vite após qualquer mudança no `.env`

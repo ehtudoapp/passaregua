@@ -1,10 +1,9 @@
 import PocketBase from 'pocketbase';
 import type { UUID } from '../types';
 
-declare const __VITE_ENV__: any;
-const PB_URL = typeof import.meta !== 'undefined' && (import.meta as any).env?.VITE_BACKEND_URL 
-  ? (import.meta as any).env.VITE_BACKEND_URL 
-  : 'http://localhost:8090';
+const PB_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:8090';
+
+console.log('🔌 PocketBase URL:', PB_URL);
 
 export const pb = new PocketBase(PB_URL);
 
