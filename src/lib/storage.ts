@@ -1,5 +1,6 @@
-import { createStorage, type StorageAPI } from './localStorage';
+import { createStorage, type StorageAPI, addPendingChange } from './localStorage';
 import type { Group, Member, UUID, ActiveGroupId, TransactionRecord, Split, Cents } from '../types';
+import { generateUUID } from './uuid';
 
 // Storage instances
 export const groupsStorage: StorageAPI<Group> = createStorage<Group>('groups');
@@ -218,9 +219,10 @@ export function createTransaction(
   descricao: string,
   valorTotal: Cents,
   data: string, // ISO 8601 format
-  pagadorId: UUID
+  pagadorId: UUID,
+  batchId?: UUID
 ): TransactionRecord {
-  return transactionsStorage.create({
+  const transaction = transactionsStorage.create({
     group_id: groupId,
     tipo: 'despesa',
     descricao,
@@ -228,6 +230,16 @@ export function createTransaction(
     data,
     pagador_id: pagadorId
   });
+
+  // Adicionar à fila de pending changes
+  addPendingChange({
+    operation: 'create',
+    collection: 'transactions',
+    data: transaction,
+    batchId
+  });
+
+  return transaction;
 }
 
 export function createPaymentTransaction(
@@ -235,9 +247,10 @@ export function createPaymentTransaction(
   valorTotal: Cents,
   data: string, // ISO 8601 format
   pagadorId: UUID,
-  descricao: string = 'Pagamento'
+  descricao: string = 'Pagamento',
+  batchId?: UUID
 ): TransactionRecord {
-  return transactionsStorage.create({
+  const transaction = transactionsStorage.create({
     group_id: groupId,
     tipo: 'pagamento',
     descricao,
@@ -245,6 +258,16 @@ export function createPaymentTransaction(
     data,
     pagador_id: pagadorId
   });
+
+  // Adicionar à fila de pending changes
+  addPendingChange({
+    operation: 'create',
+    collection: 'transactions',
+    data: transaction,
+    batchId
+  });
+
+  return transaction;
 }
 
 export function getGroupTransactions(groupId: UUID): TransactionRecord[] {
@@ -267,14 +290,25 @@ export function removeTransaction(id: UUID): boolean {
 export function createSplit(
   transactionId: UUID,
   devedorId: UUID,
-  valorDue: Cents
+  valorDue: Cents,
+  batchId?: UUID
 ): Split {
-  return splitsStorage.create({
+  const split = splitsStorage.create({
     transaction_id: transactionId,
     devedor_id: devedorId,
     valor_pago: 0,
     valor_devido: valorDue
   });
+
+  // Adicionar à fila de pending changes
+  addPendingChange({
+    operation: 'create',
+    collection: 'splits',
+    data: split,
+    batchId
+  });
+
+  return split;
 }
 
 export function getTransactionSplits(transactionId: UUID): Split[] {
@@ -291,4 +325,29 @@ export function updateSplit(id: UUID, patch: Partial<Split>): Split | undefined 
 
 export function removeSplit(id: UUID): boolean {
   return splitsStorage.remove(id);
+}
+
+// Batch atomic operations for transaction + splits
+export interface SplitAmount {
+  memberId: UUID;
+  amount: Cents;
+}
+
+export function createTransactionWithSplits(
+  groupId: UUID,
+  descricao: string,
+  valorTotal: Cents,
+  data: string,
+  pagadorId: UUID,
+  splits: SplitAmount[]
+): { transaction: TransactionRecord; splits: Split[] } {
+  const batchId = generateUUID(); // ID único para o batch
+
+  const transaction = createTransaction(groupId, descricao, valorTotal, data, pagadorId, batchId);
+
+  const createdSplits = splits.map(split =>
+    createSplit(transaction.id, split.memberId, split.amount, batchId)
+  );
+
+  return { transaction, splits: createdSplits };
 }

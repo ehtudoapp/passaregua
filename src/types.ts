@@ -28,12 +28,14 @@ export type ActiveGroupId = UUID | null;
 export interface Group {
   id: UUID;
   nome: string;
+  lastModified: number;
 }
 
 export interface Member {
   id: UUID;
   group_id: UUID;
   nome: string;
+  lastModified: number;
 }
 
 export type TransactionType = 'despesa' | 'pagamento';
@@ -46,6 +48,7 @@ export interface TransactionRecord {
   descricao?: string;
   data: ISODateString; // ISO 8601 / RFC3339
   pagador_id: UUID;
+  lastModified: number;
 }
 
 export interface Split {
@@ -54,6 +57,7 @@ export interface Split {
   devedor_id: UUID;
   valor_pago: Cents;
   valor_devido: Cents;
+  lastModified: number;
 }
 
 export interface Identifiable {
@@ -67,4 +71,29 @@ export interface ExpenseFormData {
   data: string; // format: YYYY-MM-DD
   pagador_id: UUID;
   participantes_ids: UUID[]; // IDs de membros selecionados para divisão
+}
+
+// Sync and pending changes types
+export type PendingOperationType = 'create' | 'update' | 'delete';
+export type PendingStatus = 'pending' | 'processing' | 'completed' | 'error';
+export type CollectionName = 'groups' | 'members' | 'transactions' | 'splits';
+
+export interface PendingChange {
+  id: UUID;
+  timestamp: number;
+  operation: PendingOperationType;
+  collection: CollectionName;
+  data: any;
+  batchId?: UUID; // Para agrupar transaction + splits
+  status: PendingStatus;
+  retryCount?: number;
+  error?: string;
+  lastAttempt?: number;
+}
+
+export interface SyncStatus {
+  isSyncing: boolean;
+  pendingCount: number;
+  lastSyncTime: number | null;
+  hasErrors: boolean;
 }
