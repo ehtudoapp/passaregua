@@ -53,6 +53,13 @@ function setActiveGroupStorage(groupId: ActiveGroupId): void {
 export function createGroup(data: { nome: string; members?: string[] }): Group {
   const group = groupsStorage.create({ nome: data.nome });
   
+  // Enfileira operação de criação do grupo
+  addPendingChange({
+    operation: 'create',
+    collection: 'groups',
+    data: group
+  });
+  
   // Add members if provided
   if (data.members && data.members.length > 0) {
     data.members.forEach(memberName => {
@@ -79,9 +86,20 @@ export function updateGroup(id: UUID, patch: Partial<Group>): Group | undefined 
 }
 
 export function removeGroup(id: UUID): boolean {
+  // Get group before removing
+  const group = getGroup(id);
+  
   // Remove all members of the group first
   const members = getGroupMembers(id);
-  members.forEach(member => membersStorage.remove(member.id));
+  members.forEach(member => {
+    membersStorage.remove(member.id);
+    // Enfileira deleção de cada membro
+    addPendingChange({
+      operation: 'delete',
+      collection: 'members',
+      data: member
+    });
+  });
   
   // If this is the active group, update active group reference
   const activeGroupId = getActiveGroupStorage();
@@ -95,7 +113,18 @@ export function removeGroup(id: UUID): boolean {
   }
   
   // Then remove the group
-  return groupsStorage.remove(id);
+  const removed = groupsStorage.remove(id);
+  
+  // Enfileira deleção do grupo
+  if (removed && group) {
+    addPendingChange({
+      operation: 'delete',
+      collection: 'groups',
+      data: group
+    });
+  }
+  
+  return removed;
 }
 
 export function updateGroupName(id: UUID, newName: string): Group | undefined {
@@ -103,7 +132,18 @@ export function updateGroupName(id: UUID, newName: string): Group | undefined {
   if (!trimmedName) {
     throw new Error('Nome do grupo não pode ser vazio');
   }
-  return updateGroup(id, { nome: trimmedName });
+  const updated = updateGroup(id, { nome: trimmedName });
+  
+  // Enfileira operação de atualização
+  if (updated) {
+    addPendingChange({
+      operation: 'update',
+      collection: 'groups',
+      data: updated
+    });
+  }
+  
+  return updated;
 }
 
 export function getActiveGroupId(): ActiveGroupId {
@@ -123,10 +163,19 @@ export function setActiveGroupId(groupId: ActiveGroupId): void {
 
 // Member utility functions
 export function addMemberToGroup(groupId: UUID, memberName: string): Member {
-  return membersStorage.create({
+  const member = membersStorage.create({
     group_id: groupId,
     nome: memberName
   });
+  
+  // Enfileira operação de criação do membro
+  addPendingChange({
+    operation: 'create',
+    collection: 'members',
+    data: member
+  });
+  
+  return member;
 }
 
 export function getGroupMembers(groupId: UUID): Member[] {
@@ -134,7 +183,19 @@ export function getGroupMembers(groupId: UUID): Member[] {
 }
 
 export function removeMember(memberId: UUID): boolean {
-  return membersStorage.remove(memberId);
+  const member = getMember(memberId);
+  const removed = membersStorage.remove(memberId);
+  
+  // Enfileira operação de deleção
+  if (removed && member) {
+    addPendingChange({
+      operation: 'delete',
+      collection: 'members',
+      data: member
+    });
+  }
+  
+  return removed;
 }
 
 export function getMember(id: UUID): Member | undefined {
@@ -142,7 +203,18 @@ export function getMember(id: UUID): Member | undefined {
 }
 
 export function updateMember(id: UUID, patch: Partial<Member>): Member | undefined {
-  return membersStorage.update(id, patch);
+  const updated = membersStorage.update(id, patch);
+  
+  // Enfileira operação de atualização
+  if (updated) {
+    addPendingChange({
+      operation: 'update',
+      collection: 'members',
+      data: updated
+    });
+  }
+  
+  return updated;
 }
 
 // Helper to get group with member count
@@ -279,11 +351,33 @@ export function getTransaction(id: UUID): TransactionRecord | undefined {
 }
 
 export function removeTransaction(id: UUID): boolean {
+  // Get transaction before removing
+  const transaction = getTransaction(id);
+  
   // Remove all splits associated with this transaction
   const splits = getTransactionSplits(id);
-  splits.forEach(split => splitsStorage.remove(split.id));
+  splits.forEach(split => {
+    splitsStorage.remove(split.id);
+    // Enfileira deleção de cada split
+    addPendingChange({
+      operation: 'delete',
+      collection: 'splits',
+      data: split
+    });
+  });
   
-  return transactionsStorage.remove(id);
+  const removed = transactionsStorage.remove(id);
+  
+  // Enfileira deleção da transaction
+  if (removed && transaction) {
+    addPendingChange({
+      operation: 'delete',
+      collection: 'transactions',
+      data: transaction
+    });
+  }
+  
+  return removed;
 }
 
 // Split utility functions
@@ -320,11 +414,34 @@ export function getSplit(id: UUID): Split | undefined {
 }
 
 export function updateSplit(id: UUID, patch: Partial<Split>): Split | undefined {
-  return splitsStorage.update(id, patch);
+  const updated = splitsStorage.update(id, patch);
+  
+  // Enfileira operação de atualização
+  if (updated) {
+    addPendingChange({
+      operation: 'update',
+      collection: 'splits',
+      data: updated
+    });
+  }
+  
+  return updated;
 }
 
 export function removeSplit(id: UUID): boolean {
-  return splitsStorage.remove(id);
+  const split = getSplit(id);
+  const removed = splitsStorage.remove(id);
+  
+  // Enfileira operação de deleção
+  if (removed && split) {
+    addPendingChange({
+      operation: 'delete',
+      collection: 'splits',
+      data: split
+    });
+  }
+  
+  return removed;
 }
 
 // Batch atomic operations for transaction + splits

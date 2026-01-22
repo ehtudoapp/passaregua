@@ -6,8 +6,6 @@ const pendingCount = ref(0);
 const lastSyncTime = ref<number | null>(null);
 const hasErrors = ref(false);
 
-let intervalId: number | null = null;
-
 export function useSyncStatus() {
   function updateStatus() {
     const status = syncService.getStatus();
@@ -27,36 +25,12 @@ export function useSyncStatus() {
     }
   }
 
-  function startAutoSync(intervalMs: number = 30000) {
-    if (intervalId) return;
-
-    intervalId = window.setInterval(() => {
-      if (navigator.onLine && !isSyncing.value) {
-        triggerSync();
-      }
-    }, intervalMs);
-  }
-
-  function stopAutoSync() {
-    if (intervalId) {
-      clearInterval(intervalId);
-      intervalId = null;
-    }
-  }
-
   onMounted(() => {
     updateStatus();
-
-    // Auto-sync quando ficar online
-    window.addEventListener('online', triggerSync);
-
-    // Iniciar auto-sync
-    startAutoSync();
   });
 
   onUnmounted(() => {
-    window.removeEventListener('online', triggerSync);
-    stopAutoSync();
+    // Cleanup if needed
   });
 
   return {
