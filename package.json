@@ -6,9 +6,11 @@
   "scripts": {
     "dev": "vite",
     "dev:pb": "node scripts/pocketbase.js",
+    "sync:pb-public": "node scripts/sync-pb-public.js",
     "build": "vue-tsc && vite build",
     "preview": "vite preview",
-    "test": "vitest"
+    "test": "vitest",
+    "publish": "npm run build && npm run sync:pb-public"
   },
   "dependencies": {
     "@heroicons/vue": "^2.2.0",

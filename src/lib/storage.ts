@@ -418,7 +418,7 @@ export function getSplit(id: UUID): Split | undefined {
 
 export function memberHasSplits(memberId: UUID): boolean {
   const allSplits = splitsStorage.all();
-  return allSplits.some(split => split.member_id === memberId);
+  return allSplits.some(split => split.devedor_id === memberId);
 }
 
 export function updateSplit(id: UUID, patch: Partial<Split>): Split | undefined {
