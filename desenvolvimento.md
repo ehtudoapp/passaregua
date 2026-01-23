@@ -78,6 +78,7 @@
 - [x] Criar novo grupo (gera UUID v4)
 - [x] Adicionar participantes ao grupo
 - [x] Selecionar grupo ativo
+- [ ] apagar grupo localmente
 
 ---
 
@@ -107,6 +108,7 @@
   - Positivo (verde): tem a receber
   - Negativo (vermelho): deve
 - [x] Registrar pagamento entre membros
+- [ ] Criar um botão com icone("document-currency-dollar") para criar uma transferencia consfoge a sugestão mostrada para quitar a conta
 
 ---
 
@@ -117,7 +119,7 @@
 **Funcionalidades:**
 - [x] Adicionar/remover participantes do grupo
 - [x] Definir usuário ativo (facilita lançamentos)
-- [ ] Exportar/limpar dados
+- [ ] Limpar dados (marcar tudo no banco de dados como deleted = 'true')
 
 ---
 
@@ -158,7 +160,10 @@
 ## 6. Detalhes
 - [x] Data ao lançar despesa já pegar a data atual
 - [x] Mostrar o valor da divisão entre parenteses ao inserir despesa
-- [ ] Mostrar participantes no cartão de despesas
 - [x] Divisão por porcentagem
 - [x] Divisão por valor
 - [x] Divisão por partes
+- [ ] Não deletar nada do banco de dados criar uma propriedade deleted 'true|false' no banco de dados
+- [ ] animar botão de sincronizar
+- [ ] snackbar inferior para mensagens
+- [ ] mensagem de sicronia concluida
