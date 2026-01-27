@@ -1,7 +1,7 @@
 import PocketBase from 'pocketbase';
 import type { UUID } from '../types';
 
-const PB_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:8090';
+const PB_URL = import.meta.env.VITE_BACKEND_URL || window.location.origin;
 
 console.log('🔌 PocketBase URL:', PB_URL);
 

@@ -5,7 +5,7 @@ import path from 'path'
 // https://vitejs.dev/config/
 export default defineConfig({
   plugins: [vue()],
-  base: './', // Mudança importante: usar caminhos relativos
+  base: '/', // Use absolute base so assets are requested from root
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src')
