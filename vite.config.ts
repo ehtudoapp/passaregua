@@ -1,25 +1,29 @@
 import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
+import path from 'path'
 
-// https://vite.dev/config/
+// https://vitejs.dev/config/
 export default defineConfig({
   plugins: [vue()],
-  server: {
-    allowedHosts: ['passaregua.ehtudo.app'],
-    proxy: {
-      '/api': {
-        target: 'http://localhost:8090',
-        changeOrigin: true,
-        secure: false
-      },
-      '/_': {
-        target: 'http://localhost:8090',
-        changeOrigin: true,
-        secure: false
+  base: './', // Mudança importante: usar caminhos relativos
+  resolve: {
+    alias: {
+      '@': path.resolve(__dirname, './src')
+    }
+  },
+  build: {
+    outDir: 'dist',
+    assetsDir: 'assets',
+    sourcemap: false,
+    rollupOptions: {
+      output: {
+        manualChunks: undefined
       }
     }
   },
-  preview: {
-    allowedHosts: ['passaregua.ehtudo.app']
+  server: {
+    port: 5173,
+    strictPort: false,
+    host: true
   }
 })
