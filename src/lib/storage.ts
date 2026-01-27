@@ -1,5 +1,6 @@
-import { createStorage, type StorageAPI } from './localStorage';
+import { createStorage, type StorageAPI, addPendingChange } from './localStorage';
 import type { Group, Member, UUID, ActiveGroupId, TransactionRecord, Split, Cents } from '../types';
+import { generateUUID } from './uuid';
 
 // Storage instances
 export const groupsStorage: StorageAPI<Group> = createStorage<Group>('groups');
@@ -52,6 +53,13 @@ function setActiveGroupStorage(groupId: ActiveGroupId): void {
 export function createGroup(data: { nome: string; members?: string[] }): Group {
   const group = groupsStorage.create({ nome: data.nome });
   
+  // Enfileira operação de criação do grupo
+  addPendingChange({
+    operation: 'create',
+    collection: 'groups',
+    data: group
+  });
+  
   // Add members if provided
   if (data.members && data.members.length > 0) {
     data.members.forEach(memberName => {
@@ -61,6 +69,9 @@ export function createGroup(data: { nome: string; members?: string[] }): Group {
       }
     });
   }
+  
+  // Definir como grupo ativo automaticamente
+  setActiveGroupStorage(group.id);
   
   return group;
 }
@@ -78,9 +89,9 @@ export function updateGroup(id: UUID, patch: Partial<Group>): Group | undefined 
 }
 
 export function removeGroup(id: UUID): boolean {
-  // Remove all members of the group first
-  const members = getGroupMembers(id);
-  members.forEach(member => membersStorage.remove(member.id));
+  // Get group before removing
+  const group = getGroup(id);
+  if (!group) return false;
   
   // If this is the active group, update active group reference
   const activeGroupId = getActiveGroupStorage();
@@ -93,8 +104,13 @@ export function removeGroup(id: UUID): boolean {
     }
   }
   
-  // Then remove the group
-  return groupsStorage.remove(id);
+  // Hard delete local apenas (sem sync) - permite reimportar o grupo
+  const removed = groupsStorage.remove(id);
+  
+  // Nota: members/transactions/splits do grupo permanecem no servidor
+  // para outros usuários. Cada usuário controla quais grupos vê localmente.
+  
+  return removed;
 }
 
 export function updateGroupName(id: UUID, newName: string): Group | undefined {
@@ -102,7 +118,18 @@ export function updateGroupName(id: UUID, newName: string): Group | undefined {
   if (!trimmedName) {
     throw new Error('Nome do grupo não pode ser vazio');
   }
-  return updateGroup(id, { nome: trimmedName });
+  const updated = updateGroup(id, { nome: trimmedName });
+  
+  // Enfileira operação de atualização
+  if (updated) {
+    addPendingChange({
+      operation: 'update',
+      collection: 'groups',
+      data: updated
+    });
+  }
+  
+  return updated;
 }
 
 export function getActiveGroupId(): ActiveGroupId {
@@ -122,18 +149,45 @@ export function setActiveGroupId(groupId: ActiveGroupId): void {
 
 // Member utility functions
 export function addMemberToGroup(groupId: UUID, memberName: string): Member {
-  return membersStorage.create({
+  const member = membersStorage.create({
     group_id: groupId,
     nome: memberName
   });
+  
+  // Enfileira operação de criação do membro
+  addPendingChange({
+    operation: 'create',
+    collection: 'members',
+    data: member
+  });
+  
+  return member;
 }
 
 export function getGroupMembers(groupId: UUID): Member[] {
-  return membersStorage.find(member => member.group_id === groupId);
+  return membersStorage.find(member => member.group_id === groupId && !member.deleted);
 }
 
 export function removeMember(memberId: UUID): boolean {
-  return membersStorage.remove(memberId);
+  const member = getMember(memberId);
+  if (!member) return false;
+  
+  // Soft delete: marcar como deletado
+  const updated = membersStorage.update(memberId, { 
+    deleted: true,
+    lastModified: Date.now()
+  });
+  
+  // Enfileira operação de atualização com deleted
+  if (updated) {
+    addPendingChange({
+      operation: 'update',
+      collection: 'members',
+      data: updated
+    });
+  }
+  
+  return !!updated;
 }
 
 export function getMember(id: UUID): Member | undefined {
@@ -141,7 +195,18 @@ export function getMember(id: UUID): Member | undefined {
 }
 
 export function updateMember(id: UUID, patch: Partial<Member>): Member | undefined {
-  return membersStorage.update(id, patch);
+  const updated = membersStorage.update(id, patch);
+  
+  // Enfileira operação de atualização
+  if (updated) {
+    addPendingChange({
+      operation: 'update',
+      collection: 'members',
+      data: updated
+    });
+  }
+  
+  return updated;
 }
 
 // Helper to get group with member count
@@ -218,9 +283,10 @@ export function createTransaction(
   descricao: string,
   valorTotal: Cents,
   data: string, // ISO 8601 format
-  pagadorId: UUID
+  pagadorId: UUID,
+  batchId?: UUID
 ): TransactionRecord {
-  return transactionsStorage.create({
+  const transaction = transactionsStorage.create({
     group_id: groupId,
     tipo: 'despesa',
     descricao,
@@ -228,6 +294,16 @@ export function createTransaction(
     data,
     pagador_id: pagadorId
   });
+
+  // Adicionar à fila de pending changes
+  addPendingChange({
+    operation: 'create',
+    collection: 'transactions',
+    data: transaction,
+    batchId
+  });
+
+  return transaction;
 }
 
 export function createPaymentTransaction(
@@ -235,9 +311,10 @@ export function createPaymentTransaction(
   valorTotal: Cents,
   data: string, // ISO 8601 format
   pagadorId: UUID,
-  descricao: string = 'Pagamento'
+  descricao: string = 'Pagamento',
+  batchId?: UUID
 ): TransactionRecord {
-  return transactionsStorage.create({
+  const transaction = transactionsStorage.create({
     group_id: groupId,
     tipo: 'pagamento',
     descricao,
@@ -245,10 +322,20 @@ export function createPaymentTransaction(
     data,
     pagador_id: pagadorId
   });
+
+  // Adicionar à fila de pending changes
+  addPendingChange({
+    operation: 'create',
+    collection: 'transactions',
+    data: transaction,
+    batchId
+  });
+
+  return transaction;
 }
 
 export function getGroupTransactions(groupId: UUID): TransactionRecord[] {
-  return transactionsStorage.find(transaction => transaction.group_id === groupId);
+  return transactionsStorage.find(transaction => transaction.group_id === groupId && !transaction.deleted);
 }
 
 export function getTransaction(id: UUID): TransactionRecord | undefined {
@@ -256,39 +343,141 @@ export function getTransaction(id: UUID): TransactionRecord | undefined {
 }
 
 export function removeTransaction(id: UUID): boolean {
-  // Remove all splits associated with this transaction
-  const splits = getTransactionSplits(id);
-  splits.forEach(split => splitsStorage.remove(split.id));
+  // Get transaction before removing
+  const transaction = getTransaction(id);
+  if (!transaction) return false;
   
-  return transactionsStorage.remove(id);
+  // Soft delete all splits associated with this transaction
+  const splits = getTransactionSplits(id);
+  splits.forEach(split => {
+    const updatedSplit = splitsStorage.update(split.id, {
+      deleted: true,
+      lastModified: Date.now()
+    });
+    // Enfileira atualização de cada split
+    if (updatedSplit) {
+      addPendingChange({
+        operation: 'update',
+        collection: 'splits',
+        data: updatedSplit
+      });
+    }
+  });
+  
+  // Soft delete: marcar transaction como deletada
+  const updated = transactionsStorage.update(id, {
+    deleted: true,
+    lastModified: Date.now()
+  });
+  
+  // Enfileira atualização da transaction
+  if (updated) {
+    addPendingChange({
+      operation: 'update',
+      collection: 'transactions',
+      data: updated
+    });
+  }
+  
+  return !!updated;
 }
 
 // Split utility functions
 export function createSplit(
   transactionId: UUID,
   devedorId: UUID,
-  valorDue: Cents
+  valorDue: Cents,
+  batchId?: UUID
 ): Split {
-  return splitsStorage.create({
+  const split = splitsStorage.create({
     transaction_id: transactionId,
     devedor_id: devedorId,
     valor_pago: 0,
     valor_devido: valorDue
   });
+
+  // Adicionar à fila de pending changes
+  addPendingChange({
+    operation: 'create',
+    collection: 'splits',
+    data: split,
+    batchId
+  });
+
+  return split;
 }
 
 export function getTransactionSplits(transactionId: UUID): Split[] {
-  return splitsStorage.find(split => split.transaction_id === transactionId);
+  return splitsStorage.find(split => split.transaction_id === transactionId && !split.deleted);
 }
 
 export function getSplit(id: UUID): Split | undefined {
   return splitsStorage.get(id);
 }
 
+export function memberHasSplits(memberId: UUID): boolean {
+  const allSplits = splitsStorage.all();
+  return allSplits.some(split => split.devedor_id === memberId && !split.deleted);
+}
+
 export function updateSplit(id: UUID, patch: Partial<Split>): Split | undefined {
-  return splitsStorage.update(id, patch);
+  const updated = splitsStorage.update(id, patch);
+  
+  // Enfileira operação de atualização
+  if (updated) {
+    addPendingChange({
+      operation: 'update',
+      collection: 'splits',
+      data: updated
+    });
+  }
+  
+  return updated;
 }
 
 export function removeSplit(id: UUID): boolean {
-  return splitsStorage.remove(id);
+  const split = getSplit(id);
+  if (!split) return false;
+  
+  // Soft delete: marcar como deletado
+  const updated = splitsStorage.update(id, {
+    deleted: true,
+    lastModified: Date.now()
+  });
+  
+  // Enfileira operação de atualização com deleted
+  if (updated) {
+    addPendingChange({
+      operation: 'update',
+      collection: 'splits',
+      data: updated
+    });
+  }
+  
+  return !!updated;
+}
+
+// Batch atomic operations for transaction + splits
+export interface SplitAmount {
+  memberId: UUID;
+  amount: Cents;
+}
+
+export function createTransactionWithSplits(
+  groupId: UUID,
+  descricao: string,
+  valorTotal: Cents,
+  data: string,
+  pagadorId: UUID,
+  splits: SplitAmount[]
+): { transaction: TransactionRecord; splits: Split[] } {
+  const batchId = generateUUID(); // ID único para o batch
+
+  const transaction = createTransaction(groupId, descricao, valorTotal, data, pagadorId, batchId);
+
+  const createdSplits = splits.map(split =>
+    createSplit(transaction.id, split.memberId, split.amount, batchId)
+  );
+
+  return { transaction, splits: createdSplits };
 }

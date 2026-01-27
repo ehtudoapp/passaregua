@@ -6,6 +6,7 @@ defineProps<{
   error?: string;
   label?: string;
   disabled?: boolean;
+  readonly?: boolean;
 }>();
 
 defineEmits<{
@@ -23,12 +24,14 @@ defineEmits<{
       :type="type || 'text'"
       :placeholder="placeholder"
       :disabled="disabled"
+      :readonly="readonly"
       :class="[
         'w-full px-3 py-2 border-2 rounded-lg transition text-sm focus:outline-none',
         error 
           ? 'border-rose-500 focus:border-rose-600' 
           : 'border-gray-300 focus:border-emerald-500',
-        disabled && 'bg-gray-100 cursor-not-allowed'
+        disabled && 'bg-gray-100 cursor-not-allowed',
+        readonly && 'bg-gray-50 cursor-default'
       ]"
       @input="$emit('update:modelValue', ($event.target as HTMLInputElement).value)"
     />

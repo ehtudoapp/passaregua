@@ -1,4 +1,4 @@
-import type { Identifiable, UUID } from '../types';
+import type { Identifiable, UUID, PendingChange } from '../types';
 import { generateUUID } from './uuid';
 
 function readRaw<T>(key: string): T[] {
@@ -35,7 +35,7 @@ function makeId(): UUID {
 export interface StorageAPI<T extends Identifiable> {
   all(): T[];
   get(id: UUID): T | undefined;
-  create(item: Omit<T, 'id'> & Partial<Identifiable>): T;
+  create(item: Omit<T, 'id' | 'lastModified'> & Partial<Identifiable>): T;
   update(id: UUID, patch: Partial<T>): T | undefined;
   remove(id: UUID): boolean;
   clear(): void;
@@ -54,9 +54,12 @@ export function createStorage<T extends Identifiable>(namespace: string): Storag
       return readRaw<T>(key).find(i => i.id === id);
     },
 
-    create(item: Omit<T, 'id'> & Partial<Identifiable>): T {
+    create(item: Omit<T, 'id' | 'lastModified'> & Partial<Identifiable>): T {
       const id = (item as any).id ?? makeId();
-      const newItem = { ...(item as object), id } as T;
+      // Se item já tem lastModified (vindo do servidor), usar esse valor
+      // Caso contrário, usar Date.now() (criação local)
+      const lastModified = (item as any).lastModified ?? Date.now();
+      const newItem = { ...(item as any), id, lastModified } as T;
       const items = readRaw<T>(key);
       items.push(newItem);
       writeRaw<T>(key, items);
@@ -67,7 +70,10 @@ export function createStorage<T extends Identifiable>(namespace: string): Storag
       const items = readRaw<T>(key);
       const idx = items.findIndex(i => i.id === id);
       if (idx === -1) return undefined;
-      items[idx] = { ...items[idx], ...patch } as T;
+      // Se patch já tem lastModified (vindo do servidor), usar esse valor
+      // Caso contrário, usar Date.now() (atualização local)
+      const lastModified = (patch as any).lastModified ?? Date.now();
+      items[idx] = { ...items[idx], ...patch, lastModified } as T;
       writeRaw<T>(key, items);
       return items[idx];
     },
@@ -91,3 +97,66 @@ export function createStorage<T extends Identifiable>(namespace: string): Storag
 }
 
 export default createStorage;
+
+// Pending Changes Management
+const PENDING_CHANGES_KEY = 'pr:pendingChanges';
+
+export function getPendingChanges(): PendingChange[] {
+  if (typeof localStorage === 'undefined') return [];
+  const raw = localStorage.getItem(PENDING_CHANGES_KEY);
+  return raw ? JSON.parse(raw) : [];
+}
+
+export function addPendingChange(
+  change: Omit<PendingChange, 'id' | 'timestamp' | 'status'>
+): PendingChange {
+  const newChange: PendingChange = {
+    ...change,
+    id: makeId(),
+    timestamp: Date.now(),
+    status: 'pending',
+    retryCount: 0
+  };
+
+  const changes = getPendingChanges();
+  changes.push(newChange);
+
+  if (typeof localStorage !== 'undefined') {
+    localStorage.setItem(PENDING_CHANGES_KEY, JSON.stringify(changes));
+  }
+
+  return newChange;
+}
+
+export function updatePendingChange(
+  id: UUID,
+  updates: Partial<PendingChange>
+): void {
+  const changes = getPendingChanges();
+  const idx = changes.findIndex(c => c.id === id);
+
+  if (idx !== -1) {
+    changes[idx] = { ...changes[idx], ...updates };
+    if (typeof localStorage !== 'undefined') {
+      localStorage.setItem(PENDING_CHANGES_KEY, JSON.stringify(changes));
+    }
+  }
+}
+
+export function removePendingChange(id: UUID): void {
+  const changes = getPendingChanges();
+  const filtered = changes.filter(c => c.id !== id);
+
+  if (typeof localStorage !== 'undefined') {
+    localStorage.setItem(PENDING_CHANGES_KEY, JSON.stringify(filtered));
+  }
+}
+
+export function clearCompletedChanges(): void {
+  const changes = getPendingChanges();
+  const pending = changes.filter(c => c.status !== 'completed');
+
+  if (typeof localStorage !== 'undefined') {
+    localStorage.setItem(PENDING_CHANGES_KEY, JSON.stringify(pending));
+  }
+}

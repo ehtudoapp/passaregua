@@ -1,11 +1,12 @@
 <script setup lang="ts">
-import { ref } from 'vue';
+import { ref, computed } from 'vue';
 import {
   XMarkIcon,
   PlusIcon,
   MinusIcon,
   UserGroupIcon,
-  CheckCircleIcon
+  CheckCircleIcon,
+  ClipboardDocumentIcon
 } from '@heroicons/vue/24/solid';
 import Button from '../components/Button.vue';
 import Input from '../components/Input.vue';
@@ -19,6 +20,7 @@ import {
   updateGroupName
 } from '../lib/storage';
 import { useActiveGroup } from '../composables/useActiveGroup';
+import { useSyncStatus } from '../composables/useSyncStatus';
 
 // State
 const drawerOpen = ref(false);
@@ -31,12 +33,20 @@ const nextMemberId = ref(2);
 
 const groups = ref<GroupWithCount[]>([]);
 const { activeGroupId, setActiveGroupId } = useActiveGroup();
+const { triggerSync } = useSyncStatus();
 
 // Edit drawer state
 const editDrawerOpen = ref(false);
 const editingGroup = ref<GroupWithCount | null>(null);
 const editGroupName = ref('');
 const editGroupNameError = ref('');
+const copySuccess = ref(false);
+
+// Computed
+const groupUrl = computed(() => {
+  if (!editingGroup.value) return '';
+  return `${window.location.origin}/groups/${editingGroup.value.id}`;
+});
 
 // Load groups on mount
 loadGroups();
@@ -123,6 +133,9 @@ function handleCreateGroup() {
   // Reload groups and close drawer
   loadGroups();
   closeDrawer();
+  
+  // Sincronizar imediatamente
+  triggerSync();
 }
 
 function openEditDrawer(group: GroupWithCount) {
@@ -137,6 +150,7 @@ function closeEditDrawer() {
   editingGroup.value = null;
   editGroupName.value = '';
   editGroupNameError.value = '';
+  copySuccess.value = false;
 }
 
 function validateEditGroupName(): boolean {
@@ -168,6 +182,18 @@ function handleActivateGroup() {
     groups.value = getGroupsWithMemberCount();
     closeEditDrawer();
   }
+}
+
+function copyGroupUrl() {
+  if (!editingGroup.value) return;
+  
+  const url = groupUrl.value;
+  navigator.clipboard.writeText(url).then(() => {
+    copySuccess.value = true;
+    setTimeout(() => {
+      copySuccess.value = false;
+    }, 2000);
+  });
 }
 </script>
 
@@ -317,6 +343,8 @@ function handleActivateGroup() {
         </div>
       </div>
 
+
+
       <!-- Activate Group Section -->
       <div class="pb-6">
         <h3 class="text-lg font-semibold text-gray-900 mb-4">Ativar Grupo</h3>
@@ -337,6 +365,33 @@ function handleActivateGroup() {
         <Button variant="primary" class="w-full" @click="handleSaveGroupName">
           Salvar Alterações
         </Button>
+      </div>
+
+            <!-- Group URL Section -->
+      <div class="border-b border-gray-200 pb-6">
+        <h3 class="text-lg font-semibold text-gray-900 mb-4">Endereço do Grupo</h3>
+        <p class="text-sm text-gray-600 mb-3">
+          Compartilhe este endereço para acessar diretamente este grupo
+        </p>
+        <div class="flex gap-2">
+          <div class="flex-1">
+            <Input 
+              :model-value="groupUrl"
+              label=""
+              :readonly="true"
+              class="font-mono text-sm"
+            />
+          </div>
+          <Button 
+            variant="primary" 
+            @click="copyGroupUrl"
+            class="mt-0 px-4 py-2 flex items-center gap-2"
+            :class="copySuccess ? 'bg-emerald-600 hover:bg-emerald-700' : ''"
+          >
+            <ClipboardDocumentIcon class="w-5 h-5" />
+            <span>{{ copySuccess ? 'Copiado!' : 'Copiar' }}</span>
+          </Button>
+        </div>
       </div>
     </div>
   </Drawer>

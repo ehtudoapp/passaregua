@@ -3,6 +3,8 @@ import { ref, watch, computed } from 'vue';
 import { UserGroupIcon, PlusIcon } from '@heroicons/vue/24/solid';
 import type { UUID, TransactionRecord, Member } from '../types';
 import { useActiveGroup } from '../composables/useActiveGroup';
+import { useSyncStatus } from '../composables/useSyncStatus';
+import { useDataRefresh } from '../composables/useDataRefresh';
 import { getGroupMembers, getGroupTransactions, getMember } from '../lib/storage';
 import AppHeader from '../components/AppHeader.vue';
 import AppNavbar from '../components/AppNavbar.vue';
@@ -12,6 +14,8 @@ import DrawerExpenseDetails from '../components/DrawerExpenseDetails.vue';
 
 // Composables
 const { activeGroupId } = useActiveGroup();
+const { triggerSync } = useSyncStatus();
+const { refreshTrigger } = useDataRefresh();
 
 // State
 const drawerOpen = ref(false);
@@ -20,12 +24,17 @@ const selectedTransactionId = ref<UUID | null>(null);
 const members = ref<Member[]>([]);
 const transactions = ref<TransactionRecord[]>([]);
 
-// Load transactions and members when group changes
-watch(activeGroupId, (newGroupId) => {
-    if (newGroupId) {
-        members.value = getGroupMembers(newGroupId);
-        transactions.value = getGroupTransactions(newGroupId);
+// Função para carregar dados
+function loadData() {
+    if (activeGroupId.value) {
+        members.value = getGroupMembers(activeGroupId.value);
+        transactions.value = getGroupTransactions(activeGroupId.value);
     }
+}
+
+// Load transactions and members when group changes or refresh is triggered
+watch([activeGroupId, refreshTrigger], () => {
+    loadData();
 }, { immediate: true });
 
 // Reset form when drawer opens
@@ -50,7 +59,8 @@ const formatCurrency = (cents: number): string => {
 
 const formatDate = (isoDate: string): string => {
     // Parse only the date part to avoid timezone issues
-    const datePart = isoDate.split('T')[0];
+    // Handle both ISO format (YYYY-MM-DDTHH:MM:SS) and PocketBase format (YYYY-MM-DD HH:MM:SS)
+    const datePart = isoDate.split('T')[0].split(' ')[0];
     const [year, month, day] = datePart.split('-').map(Number);
     return `${day.toString().padStart(2, '0')}/${month.toString().padStart(2, '0')}/${year}`;
 };
@@ -61,6 +71,7 @@ function reloadTransactions() {
     if (activeGroupId.value) {
         transactions.value = getGroupTransactions(activeGroupId.value);
     }
+    triggerSync();
 }
 </script>
 

@@ -15,7 +15,8 @@ import {
     getGroup,
     getGroupMembers,
     addMemberToGroup,
-    removeMember
+    removeMember,
+    memberHasSplits
 } from '../lib/storage';
 import { useActiveGroup } from '../composables/useActiveGroup';
 import { useCurrentUsername } from '../composables/useCurrentUsername';
@@ -135,6 +136,12 @@ function handleSaveUsername() {
     usernameError.value = '';
 }
 
+function canDeleteMember(memberId: string): boolean {
+    const hasSplits = memberHasSplits(memberId);
+    console.log(`Member ${memberId} has splits:`, hasSplits);
+    return !hasSplits;
+}
+
 </script>
 
 <template>
@@ -225,8 +232,13 @@ function handleSaveUsername() {
                             <div v-if="members.length > 0" class="space-y-2">
                                 <div v-for="member in members" :key="member.id"
                                     class="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition">
-                                    <span class="text-gray-900">{{ member.nome }}</span>
-                                    <Button variant="danger" @click="handleRemoveMember(member.id)">
+                                    <div class="flex-1">
+                                        <span class="text-gray-900">{{ member.nome }}</span>
+                                        <p v-if="!canDeleteMember(member.id)" class="text-xs text-gray-500 mt-1">
+                                            Possui despesas registradas
+                                        </p>
+                                    </div>
+                                    <Button v-if="canDeleteMember(member.id)" variant="danger" @click="handleRemoveMember(member.id)">
                                         <MinusIcon class="w-4 h-4" />
                                     </Button>
                                 </div>

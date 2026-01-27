@@ -10,7 +10,7 @@ import {
   divideByShares,
   type DivisionType
 } from '../composables/useDivisions';
-import { createTransaction, createSplit } from '../lib/storage';
+import { createTransactionWithSplits, type SplitAmount } from '../lib/storage';
 import Drawer from './Drawer.vue';
 import Button from './Button.vue';
 import Input from './Input.vue';
@@ -107,16 +107,8 @@ function handleAddExpense() {
   const valorTotal = Math.round(Number(formData.value.valor) * 100);
   const isoDate = new Date(formData.value.data).toISOString();
 
-  const transaction = createTransaction(
-    activeGroupId,
-    formData.value.descricao,
-    valorTotal,
-    isoDate,
-    formData.value.pagador_id
-  );
-
   // Calcular splits baseado no tipo de divisão
-  let splits: ReturnType<typeof divideEqually>;
+  let splits: SplitAmount[];
   if (formData.value.divisionType === 'equal') {
     splits = divideEqually(valorTotal, formData.value.participantes_ids);
   } else if (formData.value.divisionType === 'percentage') {
@@ -141,9 +133,15 @@ function handleAddExpense() {
     splits = [];
   }
 
-  splits.forEach(split => {
-    createSplit(transaction.id, split.memberId, split.amount);
-  });
+  // Usar função de batch atômico para criar transaction + splits
+  createTransactionWithSplits(
+    activeGroupId,
+    formData.value.descricao,
+    valorTotal,
+    isoDate,
+    formData.value.pagador_id,
+    splits
+  );
 
   emit('expense-added');
   emit('update:modelValue', false);

@@ -1,0 +1,16 @@
+node_modules
+npm-debug.log
+.git
+.gitignore
+.env
+.env.local
+.vite
+package-lock.json
+README.md
+.vscode
+.idea
+dist
+.DS_Store
+*.log
+.eslintrc.cjs
+vitest.config.ts
