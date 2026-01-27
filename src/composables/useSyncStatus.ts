@@ -1,5 +1,7 @@
 import { ref, computed, onMounted, onUnmounted } from 'vue';
 import { syncService } from '../lib/sync';
+import { useToast } from './useToast';
+import { useDataRefresh } from './useDataRefresh';
 
 const isSyncing = ref(false);
 const pendingCount = ref(0);
@@ -7,6 +9,9 @@ const lastSyncTime = ref<number | null>(null);
 const hasErrors = ref(false);
 
 export function useSyncStatus() {
+  const { success, error } = useToast();
+  const { triggerRefresh } = useDataRefresh();
+
   function updateStatus() {
     const status = syncService.getStatus();
     isSyncing.value = status.isSyncing;
@@ -17,11 +22,24 @@ export function useSyncStatus() {
 
   async function triggerSync() {
     try {
+      isSyncing.value = true;
       await syncService.fullSync();
       updateStatus();
-    } catch (error) {
-      console.error('Sync failed:', error);
+      
+      // Forçar refresh dos dados em todos os componentes
+      triggerRefresh();
+      
+      // Mostrar toast de sucesso
+      success('Dados sincronizados com sucesso!');
+      
+    } catch (err) {
+      console.error('Sync failed:', err);
       updateStatus();
+      
+      // Mostrar toast de erro
+      error('Erro ao sincronizar dados. Tente novamente.');
+    } finally {
+      isSyncing.value = false;
     }
   }
 

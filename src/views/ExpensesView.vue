@@ -4,6 +4,7 @@ import { UserGroupIcon, PlusIcon } from '@heroicons/vue/24/solid';
 import type { UUID, TransactionRecord, Member } from '../types';
 import { useActiveGroup } from '../composables/useActiveGroup';
 import { useSyncStatus } from '../composables/useSyncStatus';
+import { useDataRefresh } from '../composables/useDataRefresh';
 import { getGroupMembers, getGroupTransactions, getMember } from '../lib/storage';
 import AppHeader from '../components/AppHeader.vue';
 import AppNavbar from '../components/AppNavbar.vue';
@@ -14,6 +15,7 @@ import DrawerExpenseDetails from '../components/DrawerExpenseDetails.vue';
 // Composables
 const { activeGroupId } = useActiveGroup();
 const { triggerSync } = useSyncStatus();
+const { refreshTrigger } = useDataRefresh();
 
 // State
 const drawerOpen = ref(false);
@@ -22,12 +24,17 @@ const selectedTransactionId = ref<UUID | null>(null);
 const members = ref<Member[]>([]);
 const transactions = ref<TransactionRecord[]>([]);
 
-// Load transactions and members when group changes
-watch(activeGroupId, (newGroupId) => {
-    if (newGroupId) {
-        members.value = getGroupMembers(newGroupId);
-        transactions.value = getGroupTransactions(newGroupId);
+// Função para carregar dados
+function loadData() {
+    if (activeGroupId.value) {
+        members.value = getGroupMembers(activeGroupId.value);
+        transactions.value = getGroupTransactions(activeGroupId.value);
     }
+}
+
+// Load transactions and members when group changes or refresh is triggered
+watch([activeGroupId, refreshTrigger], () => {
+    loadData();
 }, { immediate: true });
 
 // Reset form when drawer opens

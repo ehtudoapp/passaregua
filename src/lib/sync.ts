@@ -110,7 +110,14 @@ export class SyncService {
           await syncUpdate(collection, data.id, data);
           break;
         case 'delete':
-          await syncDelete(collection, data.id);
+          // Para members/transactions/splits, fazer soft delete (update com deleted: true)
+          // Groups não devem chegar aqui (delete apenas local)
+          if (collection === 'members' || collection === 'transactions' || collection === 'splits') {
+            await syncUpdate(collection, data.id, { ...data, deleted: true });
+          } else {
+            // Fallback: hard delete (não deve ser usado normalmente)
+            await syncDelete(collection, data.id);
+          }
           break;
       }
     } catch (error) {
@@ -132,15 +139,15 @@ export class SyncService {
       const remoteGroups = await pullCollection<any>('groups', `id="${activeGroupId}"`);
       await this.mergeCollection('groups', remoteGroups, groupsStorage);
 
-      // Pull apenas membros do grupo ativo
+      // Pull apenas membros do grupo ativo (incluindo deletados para sincronizar estado)
       const remoteMembers = await pullCollection<any>('members', `group_id="${activeGroupId}"`);
       await this.mergeCollection('members', remoteMembers, membersStorage);
 
-      // Pull apenas transações do grupo ativo
+      // Pull apenas transações do grupo ativo (incluindo deletadas para sincronizar estado)
       const remoteTransactions = await pullCollection<any>('transactions', `group_id="${activeGroupId}"`);
       await this.mergeCollection('transactions', remoteTransactions, transactionsStorage);
 
-      // Pull apenas splits das transações do grupo ativo
+      // Pull apenas splits das transações do grupo ativo (incluindo deletados para sincronizar estado)
       const remoteSplits = await pullCollection<any>('splits', `transaction_id.group_id="${activeGroupId}"`);
       await this.mergeCollection('splits', remoteSplits, splitsStorage);
 
@@ -161,14 +168,14 @@ export class SyncService {
     remoteItems.forEach(remoteItem => {
       const localItem = localItems.find((item: T) => item.id === remoteItem.id);
       const remoteTimestamp = parseServerTimestamp((remoteItem as any).updated);
+      const { updated, created, ...data } = remoteItem as any;
 
       if (!localItem) {
-        // Item não existe localmente, criar
-        const { updated, created, ...data } = remoteItem as any;
+        // Item não existe localmente, criar (inclui deleted se vier do servidor)
         storage.create({ ...data, lastModified: remoteTimestamp });
       } else if (remoteTimestamp > localItem.lastModified) {
         // Item remoto é mais recente, atualizar local (last-write-wins)
-        const { updated, created, ...data } = remoteItem as any;
+        // Isso inclui aplicar deleted: true se vier do servidor
         storage.update(localItem.id, { ...data, lastModified: remoteTimestamp });
       }
       // Se local é mais recente ou igual, manter local
@@ -186,15 +193,15 @@ export class SyncService {
       }
       await this.mergeCollection('groups', remoteGroups, groupsStorage);
 
-      // Pull membros do grupo
+      // Pull membros do grupo (incluindo deletados para sincronizar estado)
       const remoteMembers = await pullCollection<any>('members', `group_id="${groupId}"`);
       await this.mergeCollection('members', remoteMembers, membersStorage);
 
-      // Pull transações do grupo
+      // Pull transações do grupo (incluindo deletadas para sincronizar estado)
       const remoteTransactions = await pullCollection<any>('transactions', `group_id="${groupId}"`);
       await this.mergeCollection('transactions', remoteTransactions, transactionsStorage);
 
-      // Pull splits das transações
+      // Pull splits das transações (incluindo deletados para sincronizar estado)
       const remoteSplits = await pullCollection<any>('splits', `transaction_id.group_id="${groupId}"`);
       await this.mergeCollection('splits', remoteSplits, splitsStorage);
 

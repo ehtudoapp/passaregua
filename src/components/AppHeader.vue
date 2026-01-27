@@ -23,12 +23,12 @@ const { triggerSync, isSyncing } = useSyncStatus();
       <button 
         @click="triggerSync"
         :disabled="isSyncing"
-        class="ml-4 p-2 rounded-lg hover:bg-emerald-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+        class="ml-4 p-2 rounded-lg hover:bg-emerald-600 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
         :title="isSyncing ? 'Sincronizando...' : 'Sincronizar agora'"
       >
         <ArrowPathIcon 
           :class="[
-            'w-6 h-6',
+            'w-6 h-6 transition-transform',
             isSyncing && 'animate-spin'
           ]" 
         />

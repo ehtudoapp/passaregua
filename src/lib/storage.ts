@@ -91,18 +91,7 @@ export function updateGroup(id: UUID, patch: Partial<Group>): Group | undefined 
 export function removeGroup(id: UUID): boolean {
   // Get group before removing
   const group = getGroup(id);
-  
-  // Remove all members of the group first
-  const members = getGroupMembers(id);
-  members.forEach(member => {
-    membersStorage.remove(member.id);
-    // Enfileira deleção de cada membro
-    addPendingChange({
-      operation: 'delete',
-      collection: 'members',
-      data: member
-    });
-  });
+  if (!group) return false;
   
   // If this is the active group, update active group reference
   const activeGroupId = getActiveGroupStorage();
@@ -115,17 +104,11 @@ export function removeGroup(id: UUID): boolean {
     }
   }
   
-  // Then remove the group
+  // Hard delete local apenas (sem sync) - permite reimportar o grupo
   const removed = groupsStorage.remove(id);
   
-  // Enfileira deleção do grupo
-  if (removed && group) {
-    addPendingChange({
-      operation: 'delete',
-      collection: 'groups',
-      data: group
-    });
-  }
+  // Nota: members/transactions/splits do grupo permanecem no servidor
+  // para outros usuários. Cada usuário controla quais grupos vê localmente.
   
   return removed;
 }
@@ -182,23 +165,29 @@ export function addMemberToGroup(groupId: UUID, memberName: string): Member {
 }
 
 export function getGroupMembers(groupId: UUID): Member[] {
-  return membersStorage.find(member => member.group_id === groupId);
+  return membersStorage.find(member => member.group_id === groupId && !member.deleted);
 }
 
 export function removeMember(memberId: UUID): boolean {
   const member = getMember(memberId);
-  const removed = membersStorage.remove(memberId);
+  if (!member) return false;
   
-  // Enfileira operação de deleção
-  if (removed && member) {
+  // Soft delete: marcar como deletado
+  const updated = membersStorage.update(memberId, { 
+    deleted: true,
+    lastModified: Date.now()
+  });
+  
+  // Enfileira operação de atualização com deleted
+  if (updated) {
     addPendingChange({
-      operation: 'delete',
+      operation: 'update',
       collection: 'members',
-      data: member
+      data: updated
     });
   }
   
-  return removed;
+  return !!updated;
 }
 
 export function getMember(id: UUID): Member | undefined {
@@ -346,7 +335,7 @@ export function createPaymentTransaction(
 }
 
 export function getGroupTransactions(groupId: UUID): TransactionRecord[] {
-  return transactionsStorage.find(transaction => transaction.group_id === groupId);
+  return transactionsStorage.find(transaction => transaction.group_id === groupId && !transaction.deleted);
 }
 
 export function getTransaction(id: UUID): TransactionRecord | undefined {
@@ -356,31 +345,41 @@ export function getTransaction(id: UUID): TransactionRecord | undefined {
 export function removeTransaction(id: UUID): boolean {
   // Get transaction before removing
   const transaction = getTransaction(id);
+  if (!transaction) return false;
   
-  // Remove all splits associated with this transaction
+  // Soft delete all splits associated with this transaction
   const splits = getTransactionSplits(id);
   splits.forEach(split => {
-    splitsStorage.remove(split.id);
-    // Enfileira deleção de cada split
-    addPendingChange({
-      operation: 'delete',
-      collection: 'splits',
-      data: split
+    const updatedSplit = splitsStorage.update(split.id, {
+      deleted: true,
+      lastModified: Date.now()
     });
+    // Enfileira atualização de cada split
+    if (updatedSplit) {
+      addPendingChange({
+        operation: 'update',
+        collection: 'splits',
+        data: updatedSplit
+      });
+    }
   });
   
-  const removed = transactionsStorage.remove(id);
+  // Soft delete: marcar transaction como deletada
+  const updated = transactionsStorage.update(id, {
+    deleted: true,
+    lastModified: Date.now()
+  });
   
-  // Enfileira deleção da transaction
-  if (removed && transaction) {
+  // Enfileira atualização da transaction
+  if (updated) {
     addPendingChange({
-      operation: 'delete',
+      operation: 'update',
       collection: 'transactions',
-      data: transaction
+      data: updated
     });
   }
   
-  return removed;
+  return !!updated;
 }
 
 // Split utility functions
@@ -409,7 +408,7 @@ export function createSplit(
 }
 
 export function getTransactionSplits(transactionId: UUID): Split[] {
-  return splitsStorage.find(split => split.transaction_id === transactionId);
+  return splitsStorage.find(split => split.transaction_id === transactionId && !split.deleted);
 }
 
 export function getSplit(id: UUID): Split | undefined {
@@ -418,7 +417,7 @@ export function getSplit(id: UUID): Split | undefined {
 
 export function memberHasSplits(memberId: UUID): boolean {
   const allSplits = splitsStorage.all();
-  return allSplits.some(split => split.devedor_id === memberId);
+  return allSplits.some(split => split.devedor_id === memberId && !split.deleted);
 }
 
 export function updateSplit(id: UUID, patch: Partial<Split>): Split | undefined {
@@ -438,18 +437,24 @@ export function updateSplit(id: UUID, patch: Partial<Split>): Split | undefined 
 
 export function removeSplit(id: UUID): boolean {
   const split = getSplit(id);
-  const removed = splitsStorage.remove(id);
+  if (!split) return false;
   
-  // Enfileira operação de deleção
-  if (removed && split) {
+  // Soft delete: marcar como deletado
+  const updated = splitsStorage.update(id, {
+    deleted: true,
+    lastModified: Date.now()
+  });
+  
+  // Enfileira operação de atualização com deleted
+  if (updated) {
     addPendingChange({
-      operation: 'delete',
+      operation: 'update',
       collection: 'splits',
-      data: split
+      data: updated
     });
   }
   
-  return removed;
+  return !!updated;
 }
 
 // Batch atomic operations for transaction + splits

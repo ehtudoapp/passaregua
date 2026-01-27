@@ -163,7 +163,7 @@
 - [x] Divisão por porcentagem
 - [x] Divisão por valor
 - [x] Divisão por partes
-- [ ] Não deletar nada do banco de dados criar uma propriedade deleted 'true|false' no banco de dados
-- [ ] animar botão de sincronizar
-- [ ] snackbar inferior para mensagens
-- [ ] mensagem de sicronia concluida
+- [x] Não deletar nada do banco de dados criar uma propriedade deleted 'true|false' no banco de dados
+- [x] animar botão de sincronizar
+- [x] snackbar inferior para mensagens
+- [x] mensagem de sicronia concluida

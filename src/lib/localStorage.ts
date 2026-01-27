@@ -56,7 +56,9 @@ export function createStorage<T extends Identifiable>(namespace: string): Storag
 
     create(item: Omit<T, 'id' | 'lastModified'> & Partial<Identifiable>): T {
       const id = (item as any).id ?? makeId();
-      const lastModified = Date.now();
+      // Se item já tem lastModified (vindo do servidor), usar esse valor
+      // Caso contrário, usar Date.now() (criação local)
+      const lastModified = (item as any).lastModified ?? Date.now();
       const newItem = { ...(item as any), id, lastModified } as T;
       const items = readRaw<T>(key);
       items.push(newItem);
@@ -68,7 +70,9 @@ export function createStorage<T extends Identifiable>(namespace: string): Storag
       const items = readRaw<T>(key);
       const idx = items.findIndex(i => i.id === id);
       if (idx === -1) return undefined;
-      const lastModified = Date.now();
+      // Se patch já tem lastModified (vindo do servidor), usar esse valor
+      // Caso contrário, usar Date.now() (atualização local)
+      const lastModified = (patch as any).lastModified ?? Date.now();
       items[idx] = { ...items[idx], ...patch, lastModified } as T;
       writeRaw<T>(key, items);
       return items[idx];

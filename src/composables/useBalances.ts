@@ -6,6 +6,7 @@ import {
   getTransactionSplits
 } from '../lib/storage';
 import { useActiveGroup } from './useActiveGroup';
+import { useDataRefresh } from './useDataRefresh';
 
 export interface MemberBalance {
   memberId: UUID;
@@ -23,6 +24,7 @@ export interface SuggestedTransaction {
 
 export function useBalances() {
   const { activeGroupId } = useActiveGroup();
+  const { refreshTrigger } = useDataRefresh();
   const balances = ref<MemberBalance[]>([]);
   const suggestedTransactions = ref<SuggestedTransaction[]>([]);
   const totalExpenses = ref<Cents>(0);
@@ -166,8 +168,8 @@ export function useBalances() {
     return transactions;
   }
 
-  // Recalculate when active group changes
-  watch(activeGroupId, calculateBalances, { immediate: true });
+  // Recalculate when active group changes or refresh is triggered
+  watch([activeGroupId, refreshTrigger], calculateBalances, { immediate: true });
 
   // Function to manually refresh balances
   function refresh() {

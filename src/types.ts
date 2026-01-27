@@ -36,6 +36,7 @@ export interface Member {
   group_id: UUID;
   nome: string;
   lastModified: number;
+  deleted?: boolean;
 }
 
 export type TransactionType = 'despesa' | 'pagamento';
@@ -49,6 +50,7 @@ export interface TransactionRecord {
   data: ISODateString; // ISO 8601 / RFC3339
   pagador_id: UUID;
   lastModified: number;
+  deleted?: boolean;
 }
 
 export interface Split {
@@ -58,6 +60,7 @@ export interface Split {
   valor_pago: Cents;
   valor_devido: Cents;
   lastModified: number;
+  deleted?: boolean;
 }
 
 export interface Identifiable {
