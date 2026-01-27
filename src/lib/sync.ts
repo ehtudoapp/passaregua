@@ -17,7 +17,7 @@ export class SyncService {
 
   async processPendingChanges(): Promise<void> {
     if (this.isSyncing) {
-      console.log('Sync already in progress');
+      console.log('⏭️ Sync already in progress');
       return;
     }
 
@@ -25,9 +25,18 @@ export class SyncService {
 
     try {
       const changes = getPendingChanges().filter(c => c.status === 'pending' || c.status === 'error');
+      
+      if (changes.length === 0) {
+        console.log('✅ No pending changes to process');
+        return;
+      }
+
+      console.log(`📝 Processing ${changes.length} pending changes:`, changes.map(c => `${c.operation} ${c.collection}`));
 
       // Agrupar por batchId
       const batches = this.groupByBatch(changes);
+      
+      console.log(`📦 Grouped into ${batches.length} batches`);
 
       // Processar cada batch
       for (const batch of batches) {
@@ -38,9 +47,9 @@ export class SyncService {
       clearCompletedChanges();
 
       this.lastSyncTime = Date.now();
-      console.log('Pending changes processed successfully');
+      console.log('✅ Pending changes processed successfully');
     } catch (error) {
-      console.error('Sync error:', error);
+      console.error('❌ Sync error:', error);
     } finally {
       this.isSyncing = false;
     }
@@ -62,27 +71,22 @@ export class SyncService {
   }
 
   private async processBatch(batch: PendingChange[]): Promise<void> {
-    // Marcar todos como processing
-    batch.forEach(change => {
+    // Processar cada operação do batch individualmente
+    // Se uma falhar, as outras ainda podem ser processadas
+    for (const change of batch) {
+      // Marcar como processing
       updatePendingChange(change.id, {
         status: 'processing',
         lastAttempt: Date.now()
       });
-    });
 
-    try {
-      // Processar cada operação do batch em sequência
-      for (const change of batch) {
+      try {
         await this.processChange(change);
-      }
-
-      // Se tudo deu certo, marcar todos como completed
-      batch.forEach(change => {
+        
+        // Se deu certo, marcar como completed
         updatePendingChange(change.id, { status: 'completed' });
-      });
-    } catch (error) {
-      // Se falhou, marcar todos como error e incrementar retry count
-      batch.forEach(change => {
+      } catch (error) {
+        // Se falhou, marcar como error e incrementar retry count
         const retryCount = (change.retryCount || 0) + 1;
         const status = retryCount >= MAX_RETRIES ? 'error' : 'pending';
 
@@ -91,10 +95,9 @@ export class SyncService {
           retryCount,
           error: error instanceof Error ? error.message : 'Unknown error'
         });
-      });
-
-      // Re-throw para que o batch seja considerado falho
-      throw error;
+        
+        console.error(`⚠️ Change failed (retry ${retryCount}/${MAX_RETRIES}):`, change.operation, change.collection, change.data.id);
+      }
     }
   }
 
@@ -104,24 +107,64 @@ export class SyncService {
     try {
       switch (operation) {
         case 'create':
-          await syncCreate(collection, data);
+          try {
+            await syncCreate(collection, data);
+          } catch (error: any) {
+            // Se já existe (ID duplicado), tentar atualizar em vez de criar
+            const isDuplicateId = error?.status === 400 && 
+                                 error?.data?.id?.code === 'validation_not_unique';
+            
+            if (isDuplicateId) {
+              console.log(`⚠️ Record already exists, updating instead: ${collection}/${data.id}`);
+              await syncUpdate(collection, data.id, data);
+            } else {
+              throw error;
+            }
+          }
           break;
         case 'update':
-          await syncUpdate(collection, data.id, data);
+          try {
+            await syncUpdate(collection, data.id, data);
+          } catch (error: any) {
+            // Se registro não existe (404), criar em vez de atualizar
+            if (error?.status === 404) {
+              console.log(`⚠️ Record not found, creating instead: ${collection}/${data.id}`);
+              await syncCreate(collection, data);
+            } else {
+              throw error;
+            }
+          }
           break;
         case 'delete':
           // Para members/transactions/splits, fazer soft delete (update com deleted: true)
           // Groups não devem chegar aqui (delete apenas local)
           if (collection === 'members' || collection === 'transactions' || collection === 'splits') {
-            await syncUpdate(collection, data.id, { ...data, deleted: true });
+            try {
+              await syncUpdate(collection, data.id, { ...data, deleted: true });
+            } catch (error: any) {
+              // Se registro não existe (404), não precisa fazer nada - já está "deletado" (nunca existiu)
+              if (error?.status === 404) {
+                console.log(`ℹ️ Record not found on server, skipping delete: ${collection}/${data.id}`);
+                // Não criar registro deletado - se não existe, não precisa criar só para marcar como deletado
+              } else {
+                throw error;
+              }
+            }
           } else {
             // Fallback: hard delete (não deve ser usado normalmente)
-            await syncDelete(collection, data.id);
+            try {
+              await syncDelete(collection, data.id);
+            } catch (error: any) {
+              // Se já foi deletado ou não existe, ignorar erro 404
+              if (error?.status !== 404) {
+                throw error;
+              }
+            }
           }
           break;
       }
     } catch (error) {
-      console.error(`Failed to sync ${operation} on ${collection}:`, error);
+      console.error(`❌ Failed to sync ${operation} on ${collection}:`, error);
       throw error;
     }
   }
@@ -130,15 +173,16 @@ export class SyncService {
    * Verifica se um grupo existe no servidor, se não existir, cria-o junto com
    * todos os membros, transações e splits locais. Também atualiza os itens locais
    * para incluir o campo deleted quando necessário.
+   * @returns 'created' se criou o grupo, 'exists' se já existia, false se falhou
    */
-  async ensureGroupExistsOnServer(groupId: string): Promise<boolean> {
+  async ensureGroupExistsOnServer(groupId: string): Promise<'created' | 'exists' | false> {
     try {
       // Verificar se o grupo existe no servidor
       const remoteGroups = await pullCollection<any>('groups', `id="${groupId}"`);
       
       if (remoteGroups.length > 0) {
         // Grupo já existe no servidor
-        return true;
+        return 'exists';
       }
 
       console.log('Group not found on server, creating:', groupId);
@@ -213,7 +257,7 @@ export class SyncService {
       }
 
       console.log('Group and all related data created on server:', groupId);
-      return true;
+      return 'created';
     } catch (error) {
       console.error('Failed to ensure group exists on server:', error);
       return false;
@@ -312,9 +356,10 @@ export class SyncService {
     // Se há grupo ativo, garantir que ele existe no servidor antes de qualquer operação
     if (activeGroupId) {
       try {
-        const groupExists = await this.ensureGroupExistsOnServer(activeGroupId);
-        if (groupExists) {
-          // Limpar pending changes relacionadas a este grupo que agora já estão no servidor
+        const result = await this.ensureGroupExistsOnServer(activeGroupId);
+        // Só limpar pending changes se o grupo foi CRIADO agora
+        // Se já existia, não limpar - tem pending changes novas para processar
+        if (result === 'created') {
           this.cleanupPendingChangesForGroup(activeGroupId);
         }
       } catch (error) {

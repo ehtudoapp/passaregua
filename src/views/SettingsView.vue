@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted, watch } from 'vue';
+import { ref, onMounted, watch, computed } from 'vue';
 import {
     PlusIcon,
     MinusIcon,
@@ -20,10 +20,14 @@ import {
 } from '../lib/storage';
 import { useActiveGroup } from '../composables/useActiveGroup';
 import { useCurrentUsername } from '../composables/useCurrentUsername';
+import { useSyncStatus } from '../composables/useSyncStatus';
+import { useDataRefresh } from '../composables/useDataRefresh';
 
 // State
 const { activeGroupId } = useActiveGroup();
 const { currentUsername, setCurrentUsername } = useCurrentUsername();
+const { triggerSync } = useSyncStatus();
+const { refreshTrigger } = useDataRefresh();
 const groupName = ref('');
 const members = ref<Member[]>([]);
 const newMemberName = ref('');
@@ -41,6 +45,14 @@ onMounted(() => {
 // Watch for active group changes
 watch(
     activeGroupId,
+    () => {
+        loadGroupAndMembers();
+    }
+);
+
+// Watch for sync refresh - recarregar dados quando sync terminar
+watch(
+    refreshTrigger,
     () => {
         loadGroupAndMembers();
     }
@@ -78,7 +90,7 @@ function validateNewMemberName(): boolean {
     return true;
 }
 
-function handleAddMember() {
+async function handleAddMember() {
     if (!validateNewMemberName() || !activeGroupId.value) {
         return;
     }
@@ -88,6 +100,9 @@ function handleAddMember() {
         members.value.push(newMember);
         newMemberName.value = '';
         newMemberError.value = '';
+        
+        // Sincronizar imediatamente após adicionar
+        triggerSync();
     } catch (error) {
         newMemberError.value = error instanceof Error ? error.message : 'Erro ao adicionar membro';
     }
@@ -96,6 +111,9 @@ function handleAddMember() {
 function handleRemoveMember(memberId: string) {
     if (removeMember(memberId)) {
         members.value = members.value.filter((m: Member) => m.id !== memberId);
+        
+        // Sincronizar imediatamente após remover
+        triggerSync();
     }
 }
 
@@ -136,10 +154,19 @@ function handleSaveUsername() {
     usernameError.value = '';
 }
 
+// Computed que calcula quais membros podem ser deletados (cacheado, não recalcula a cada keystroke)
+const deletableMembers = computed(() => {
+    const result = new Set<string>();
+    for (const member of members.value) {
+        if (!memberHasSplits(member.id)) {
+            result.add(member.id);
+        }
+    }
+    return result;
+});
+
 function canDeleteMember(memberId: string): boolean {
-    const hasSplits = memberHasSplits(memberId);
-    console.log(`Member ${memberId} has splits:`, hasSplits);
-    return !hasSplits;
+    return deletableMembers.value.has(memberId);
 }
 
 </script>

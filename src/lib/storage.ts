@@ -151,7 +151,8 @@ export function setActiveGroupId(groupId: ActiveGroupId): void {
 export function addMemberToGroup(groupId: UUID, memberName: string): Member {
   const member = membersStorage.create({
     group_id: groupId,
-    nome: memberName
+    nome: memberName,
+    deleted: false
   });
   
   // Enfileira operação de criação do membro

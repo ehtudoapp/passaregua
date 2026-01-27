@@ -12,7 +12,22 @@ pb.autoCancellation(false);
 
 // Helper para sincronizar create
 export async function syncCreate<T>(collection: string, data: T): Promise<T> {
-  return await pb.collection(collection).create(data as any);
+  console.log(`🔄 Creating ${collection}:`, data);
+  
+  // Remover campos que o PocketBase gerencia automaticamente
+  const cleanData = { ...data } as any;
+  delete cleanData.lastModified; // PocketBase usa 'updated' automaticamente
+  delete cleanData.created;
+  delete cleanData.updated;
+  
+  try {
+    const result = await pb.collection(collection).create(cleanData);
+    console.log(`✅ Created ${collection}:`, result);
+    return result as T;
+  } catch (error) {
+    console.error(`❌ Failed to create ${collection}:`, error);
+    throw error;
+  }
 }
 
 // Helper para sincronizar update
@@ -21,7 +36,23 @@ export async function syncUpdate<T>(
   id: UUID,
   data: Partial<T>
 ): Promise<T> {
-  return await pb.collection(collection).update(id, data);
+  console.log(`🔄 Updating ${collection}/${id}:`, data);
+  
+  // Remover campos que o PocketBase gerencia automaticamente
+  const cleanData = { ...data } as any;
+  delete cleanData.lastModified; // PocketBase usa 'updated' automaticamente
+  delete cleanData.created;
+  delete cleanData.updated;
+  delete cleanData.id; // Não enviar ID no body
+  
+  try {
+    const result = await pb.collection(collection).update(id, cleanData);
+    console.log(`✅ Updated ${collection}/${id}:`, result);
+    return result as T;
+  } catch (error) {
+    console.error(`❌ Failed to update ${collection}/${id}:`, error);
+    throw error;
+  }
 }
 
 // Helper para sincronizar delete
