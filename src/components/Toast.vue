@@ -51,7 +51,7 @@ const bgColor = computed(() => {
     <div
       v-if="show"
       :class="[
-        'fixed bottom-20 left-4 right-4 z-50 rounded-lg shadow-lg p-4 flex items-center gap-3',
+        'max-w-xl mx-auto fixed bottom-20 left-4 right-4 z-50 rounded-lg shadow-lg p-4 flex items-center gap-3',
         bgColor
       ]"
     >
