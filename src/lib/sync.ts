@@ -6,7 +6,7 @@ import {
 } from './localStorage';
 import { syncCreate, syncUpdate, syncDelete, pullCollection, parseServerTimestamp } from './pocketbase';
 import { groupsStorage, membersStorage, transactionsStorage, splitsStorage, getActiveGroupId } from './storage';
-import type { PendingChange } from '../types';
+import type { PendingChange, Member, TransactionRecord, Split } from '../types';
 
 const MAX_RETRIES = 3;
 const CLEANUP_DAYS = 7;
@@ -126,6 +126,100 @@ export class SyncService {
     }
   }
 
+  /**
+   * Verifica se um grupo existe no servidor, se não existir, cria-o junto com
+   * todos os membros, transações e splits locais. Também atualiza os itens locais
+   * para incluir o campo deleted quando necessário.
+   */
+  async ensureGroupExistsOnServer(groupId: string): Promise<boolean> {
+    try {
+      // Verificar se o grupo existe no servidor
+      const remoteGroups = await pullCollection<any>('groups', `id="${groupId}"`);
+      
+      if (remoteGroups.length > 0) {
+        // Grupo já existe no servidor
+        return true;
+      }
+
+      console.log('Group not found on server, creating:', groupId);
+
+      // Buscar grupo local
+      const localGroup = groupsStorage.get(groupId);
+      if (!localGroup) {
+        console.error('Group not found locally:', groupId);
+        return false;
+      }
+
+      // Criar grupo no servidor
+      await syncCreate('groups', {
+        id: localGroup.id,
+        nome: localGroup.nome,
+        lastModified: localGroup.lastModified
+      });
+
+      // Buscar e criar todos os membros do grupo
+      const localMembers = membersStorage.find((m: Member) => m.group_id === groupId);
+      for (const member of localMembers) {
+        await syncCreate('members', {
+          id: member.id,
+          group_id: member.group_id,
+          nome: member.nome,
+          lastModified: member.lastModified,
+          deleted: member.deleted || false
+        });
+        // Atualizar local para garantir campo deleted existe
+        if (member.deleted === undefined) {
+          membersStorage.update(member.id, { deleted: false });
+        }
+      }
+
+      // Buscar e criar todas as transações do grupo
+      const localTransactions = transactionsStorage.find((t: TransactionRecord) => t.group_id === groupId);
+      for (const transaction of localTransactions) {
+        await syncCreate('transactions', {
+          id: transaction.id,
+          group_id: transaction.group_id,
+          tipo: transaction.tipo,
+          valor_total: transaction.valor_total,
+          descricao: transaction.descricao,
+          data: transaction.data,
+          pagador_id: transaction.pagador_id,
+          lastModified: transaction.lastModified,
+          deleted: transaction.deleted || false
+        });
+        // Atualizar local para garantir campo deleted existe
+        if (transaction.deleted === undefined) {
+          transactionsStorage.update(transaction.id, { deleted: false });
+        }
+      }
+
+      // Buscar e criar todos os splits das transações do grupo
+      const transactionIds = localTransactions.map(t => t.id);
+      const localSplits = splitsStorage.find((s: Split) => transactionIds.includes(s.transaction_id));
+      for (const split of localSplits) {
+        await syncCreate('splits', {
+          id: split.id,
+          transaction_id: split.transaction_id,
+          devedor_id: split.devedor_id,
+          valor_pago: split.valor_pago,
+          valor_devido: split.valor_devido,
+          lastModified: split.lastModified,
+          deleted: split.deleted || false
+        });
+        // Atualizar local para garantir campo deleted existe
+        if (split.deleted === undefined) {
+          splitsStorage.update(split.id, { deleted: false });
+        }
+      }
+
+      console.log('Group and all related data created on server:', groupId);
+      return true;
+    } catch (error) {
+      console.error('Failed to ensure group exists on server:', error);
+      return false;
+    }
+  }
+
   async pullRemoteData(): Promise<void> {
     try {
       const activeGroupId = getActiveGroupId();
@@ -213,6 +307,21 @@ export class SyncService {
   }
 
   async fullSync(): Promise<void> {
+    const activeGroupId = getActiveGroupId();
+    
+    // Se há grupo ativo, garantir que ele existe no servidor antes de qualquer operação
+    if (activeGroupId) {
+      try {
+        const groupExists = await this.ensureGroupExistsOnServer(activeGroupId);
+        if (groupExists) {
+          // Limpar pending changes relacionadas a este grupo que agora já estão no servidor
+          this.cleanupPendingChangesForGroup(activeGroupId);
+        }
+      } catch (error) {
+        console.warn('Failed to ensure group exists on server:', error);
+      }
+    }
+
     // Primeiro pull dados remotos (se houver grupo ativo)
     try {
       await this.pullRemoteData();
@@ -222,6 +331,30 @@ export class SyncService {
 
     // Depois push mudanças locais (sempre tenta)
     await this.processPendingChanges();
+  }
+
+  /**
+   * Remove pending changes que já foram sincronizadas manualmente
+   * quando o grupo foi criado no servidor pela primeira vez
+   */
+  private cleanupPendingChangesForGroup(groupId: string): void {
+    const changes = getPendingChanges();
+    const transactionIds = transactionsStorage.find((t: TransactionRecord) => t.group_id === groupId).map(t => t.id);
+    
+    changes.forEach(change => {
+      // Remove creates para o grupo, membros do grupo, transações do grupo e splits dessas transações
+      if (change.operation === 'create') {
+        if (change.collection === 'groups' && change.data.id === groupId) {
+          removePendingChange(change.id);
+        } else if (change.collection === 'members' && change.data.group_id === groupId) {
+          removePendingChange(change.id);
+        } else if (change.collection === 'transactions' && change.data.group_id === groupId) {
+          removePendingChange(change.id);
+        } else if (change.collection === 'splits' && transactionIds.includes(change.data.transaction_id)) {
+          removePendingChange(change.id);
+        }
+      }
+    });
   }
 
   getStatus() {
