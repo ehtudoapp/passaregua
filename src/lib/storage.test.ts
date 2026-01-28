@@ -102,8 +102,8 @@ describe('Storage', () => {
       expect(removed).toBe(true);
       expect(getGroup(group.id)).toBeUndefined();
       
-      // Members não são deletados (permanecem no servidor para outros usuários)
-      expect(membersStorage.all().length).toBe(membersBefore);
+      // Hard delete local: members são removidos em cascata
+      expect(membersStorage.all().length).toBe(membersBefore - 2);
     });
 
     it('should return false when removing non-existent group', () => {
