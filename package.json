@@ -1,7 +1,7 @@
 {
   "name": "passaregua",
   "private": true,
-  "version": "2026.01.272244",
+  "version": "2026.01.272321",
   "type": "module",
   "scripts": {
     "dev": "vite",
