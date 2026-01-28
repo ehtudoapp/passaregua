@@ -78,7 +78,7 @@
 - [x] Criar novo grupo (gera UUID v4)
 - [x] Adicionar participantes ao grupo
 - [x] Selecionar grupo ativo
-- [ ] apagar grupo localmente
+- [x] apagar grupo localmente
 
 ---
 
@@ -119,7 +119,6 @@
 **Funcionalidades:**
 - [x] Adicionar/remover participantes do grupo
 - [x] Definir usuário ativo (facilita lançamentos)
-- [ ] Limpar dados (marcar tudo no banco de dados como deleted = 'true')
 
 ---
 

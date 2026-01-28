@@ -104,11 +104,23 @@ export function removeGroup(id: UUID): boolean {
     }
   }
   
-  // Hard delete local apenas (sem sync) - permite reimportar o grupo
-  const removed = groupsStorage.remove(id);
+  // Hard delete em cascata: remove members, transactions e splits
+  const members = getGroupMembers(id);
+  members.forEach(member => {
+    membersStorage.remove(member.id);
+  });
   
-  // Nota: members/transactions/splits do grupo permanecem no servidor
-  // para outros usuários. Cada usuário controla quais grupos vê localmente.
+  const transactions = getGroupTransactions(id);
+  transactions.forEach(transaction => {
+    const splits = getTransactionSplits(transaction.id);
+    splits.forEach(split => {
+      splitsStorage.remove(split.id);
+    });
+    transactionsStorage.remove(transaction.id);
+  });
+  
+  // Hard delete do grupo
+  const removed = groupsStorage.remove(id);
   
   return removed;
 }

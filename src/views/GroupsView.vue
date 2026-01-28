@@ -6,7 +6,8 @@ import {
   MinusIcon,
   UserGroupIcon,
   CheckCircleIcon,
-  ClipboardDocumentIcon
+  ClipboardDocumentIcon,
+  TrashIcon
 } from '@heroicons/vue/24/solid';
 import Button from '../components/Button.vue';
 import Input from '../components/Input.vue';
@@ -17,7 +18,8 @@ import {
   createGroup,
   getGroupsWithMemberCount,
   type GroupWithCount,
-  updateGroupName
+  updateGroupName,
+  removeGroup
 } from '../lib/storage';
 import { useActiveGroup } from '../composables/useActiveGroup';
 import { useSyncStatus } from '../composables/useSyncStatus';
@@ -41,6 +43,10 @@ const editingGroup = ref<GroupWithCount | null>(null);
 const editGroupName = ref('');
 const editGroupNameError = ref('');
 const copySuccess = ref(false);
+
+// Delete confirmation modal state
+const deleteConfirmOpen = ref(false);
+const groupToDelete = ref<GroupWithCount | null>(null);
 
 // Computed
 const groupUrl = computed(() => {
@@ -194,6 +200,28 @@ function copyGroupUrl() {
       copySuccess.value = false;
     }, 2000);
   });
+}
+
+function openDeleteConfirm(group: GroupWithCount) {
+  groupToDelete.value = group;
+  deleteConfirmOpen.value = true;
+}
+
+function closeDeleteConfirm() {
+  deleteConfirmOpen.value = false;
+  groupToDelete.value = null;
+}
+
+function handleDeleteConfirm() {
+  if (!groupToDelete.value) return;
+  
+  removeGroup(groupToDelete.value.id);
+  loadGroups();
+  closeDeleteConfirm();
+  closeEditDrawer();
+  
+  // Sincronizar após deleção
+  triggerSync();
 }
 </script>
 
@@ -393,6 +421,55 @@ function copyGroupUrl() {
           </Button>
         </div>
       </div>
+
+      <!-- Delete Group Section -->
+      <div class="border-t border-gray-200 pt-6">
+        <h3 class="text-lg font-semibold text-gray-900 mb-4">Deletar Grupo</h3>
+        <p class="text-sm text-gray-600 mb-3">
+          Remova este grupo do seu dispositivo. Você pode reimportá-lo usando o link de compartilhamento.
+        </p>
+        <Button 
+          variant="primary"
+          class="w-full bg-rose-600 hover:bg-rose-700 text-white flex items-center justify-center gap-2"
+          @click="openDeleteConfirm(editingGroup!)"
+        >
+          <TrashIcon class="w-5 h-5" />
+          <span>Deletar Grupo</span>
+        </Button>
+      </div>
     </div>
   </Drawer>
+
+  <!-- Delete Confirmation Modal -->
+  <div v-if="deleteConfirmOpen" class="fixed inset-0 z-60 flex items-center justify-center bg-black bg-opacity-50 px-4">
+    <div class="max-w-md w-full">
+      <div class="bg-white rounded-lg shadow-lg p-8 text-center space-y-4">
+        <TrashIcon class="w-16 h-16 mx-auto text-rose-500" />
+        <h2 class="text-2xl font-bold text-gray-900">Deletar Grupo?</h2>
+        <p class="text-gray-600">
+          Tem certeza que deseja deletar <span class="font-semibold">{{ groupToDelete?.nome }}</span>?
+        </p>
+        <p class="text-sm text-gray-500">
+          Esta ação é irreversível localmente, mas você pode reimportar o grupo usando o link de compartilhamento.
+        </p>
+        
+        <div class="flex gap-3 pt-4">
+          <Button 
+            variant="primary"
+            class="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-900"
+            @click="closeDeleteConfirm"
+          >
+            Não, cancelar
+          </Button>
+          <Button 
+            variant="primary"
+            class="flex-1 bg-rose-600 hover:bg-rose-700 text-white"
+            @click="handleDeleteConfirm"
+          >
+            Sim, deletar
+          </Button>
+        </div>
+      </div>
+    </div>
+  </div>
 </template>
