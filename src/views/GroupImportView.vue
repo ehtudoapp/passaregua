@@ -2,6 +2,7 @@
 import { ref, onMounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { syncService } from '../lib/sync';
+import { getGroups, setActiveGroupId } from '../lib/storage';
 import { ArrowPathIcon, CheckCircleIcon, XCircleIcon } from '@heroicons/vue/24/outline';
 
 const route = useRoute();
@@ -21,8 +22,14 @@ onMounted(async () => {
   }
 
   try {
+    const groupsBeforeImport = getGroups();
     await syncService.pullSpecificGroup(groupId);
     success.value = true;
+    
+    // Se não havia grupos, ativar o grupo importado como o primeiro
+    if (groupsBeforeImport.length === 0) {
+      setActiveGroupId(groupId);
+    }
     
     // Aguardar 1.5 segundos para mostrar o sucesso, então redirecionar
     setTimeout(() => {

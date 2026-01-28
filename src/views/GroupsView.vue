@@ -61,6 +61,21 @@ function loadGroups() {
   groups.value = getGroupsWithMemberCount();
 }
 
+function handleGroupCardClick(group: GroupWithCount) {
+  if (activeGroupId.value === group.id) {
+    // Se o grupo já está ativo, abre o drawer de edição
+    openEditDrawer(group);
+  } else {
+    // Se não está ativo, ativa o grupo e redireciona para despesas
+    setActiveGroupId(group.id);
+    groups.value = getGroupsWithMemberCount();
+    // Redirecionar para aba de despesas
+    setTimeout(() => {
+      window.location.href = '/expenses';
+    }, 100);
+  }
+}
+
 function openDrawer() {
   drawerOpen.value = true;
   resetForm();
@@ -256,7 +271,7 @@ function handleDeleteConfirm() {
             <div v-for="group in groups" :key="group.id" :class="[
               'bg-white rounded-lg border border-gray-200 p-4 shadow-sm cursor-pointer hover:shadow-md transition-shadow',
               activeGroupId === group.id ? 'ring-2 ring-emerald-500' : ''
-            ]" @click="openEditDrawer(group)">
+            ]" @click="handleGroupCardClick(group)">
               <div class="flex items-start justify-between">
                 <div class="flex-1">
                   <h3 class="text-lg font-semibold text-gray-900 mb-1">
