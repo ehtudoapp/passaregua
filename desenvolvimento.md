@@ -79,9 +79,9 @@
 - [x] Adicionar participantes ao grupo
 - [x] Selecionar grupo ativo
 - [x] apagar grupo localmente
-- [ ] ao criar o primeiro grupo deixar ele com grupo ativo
-- [ ] ao importar grupo se for o primeiro ele já deve ser o grupo ativo
-- [ ] ao clicar no card do grupo se for o grupo ativo aparece o drawer de edição, se não for o ativo tornar esse grupo ativo e redirecionar para aba de lançamentos
+- [x] ao criar o primeiro grupo deixar ele com grupo ativo
+- [x] ao importar grupo se for o primeiro ele já deve ser o grupo ativo
+- [x] ao clicar no card do grupo se for o grupo ativo aparece o drawer de edição, se não for o ativo tornar esse grupo ativo e redirecionar para aba de lançamentos
 
 ---
 
