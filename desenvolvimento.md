@@ -108,7 +108,7 @@
   - Positivo (verde): tem a receber
   - Negativo (vermelho): deve
 - [x] Registrar pagamento entre membros
-- [ ] Criar um botão com icone("document-currency-dollar") para criar uma transferencia consfoge a sugestão mostrada para quitar a conta
+- [ ] Criar um botão com icone("document-currency-dollar") para criar uma transferencia conforme a sugestão mostrada para quitar a conta
 
 ---
 

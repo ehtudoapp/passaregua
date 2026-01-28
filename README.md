@@ -1,6 +1,6 @@
 # Passaregua
 
-Aplicação SPA para divisão inteligente de despesas entre amigos.
+Aplicação SPA para divisão inteligente de despesas entre amigos. Com sincronia de grupos entre dispositivos.
 
 ## 🎯 Sobre
 
@@ -8,6 +8,7 @@ O Passaregua é uma aplicação web que calcula automaticamente o acerto de cont
 
 ## 🚀 Tecnologias
 
+- **pocketbase** - Backend num unico binario escrito em GO, com possibilidade de extensões
 - **Vue 3** - Framework JavaScript progressivo
 - **TypeScript** - Tipagem estática para JavaScript
 - **Vite** - Build tool rápido e moderno
@@ -22,7 +23,7 @@ O algoritmo implementado segue a seguinte lógica:
    - Saldo positivo (+) = credor (pagou mais que deveria)
    - Saldo negativo (-) = devedor (pagou menos que deveria)
 
-2. **Simplificação greedy**: O algoritmo cruza o maior devedor com o maior credor, realizando a maior transferência possível entre eles
+2. **Simplificação**: O algoritmo cruza o maior devedor com o maior credor, realizando a maior transferência possível entre eles
 
 3. **Repete o ciclo** até zerar todos os saldos
 
@@ -39,7 +40,7 @@ Isso garante o **número mínimo de transações**, evitando voltas desnecessár
 ### Pré-requisitos
 
 - Node.js 18+
-- npm ou yarn
+- npm
 
 ### Instalação
 
