@@ -97,6 +97,7 @@
 - [+] Campo: Quem pagou (select de membros)
 - [+] Campo: Descrição
 - [+] Lista: Divisão por participante
+- [ ] fix: detalhes da despesa mostrando NAN no dia
 
 ---
 
