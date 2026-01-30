@@ -41,8 +41,41 @@ const divisionUnits: Record<DivisionType, string> = {
   shares: 'partes'
 };
 
-watch(() => props.divisionType, () => {
-  emit('update:divisionDetails', new Map());
+watch(() => props.divisionType, (newType) => {
+  const newDetails = new Map<UUID, number>();
+  
+  // Quando mudar o tipo de divisão, distribuir igualmente pelos participantes selecionados
+  if (props.participantesIds.length > 0) {
+    if (newType === 'percentage') {
+      // Dividir 100% igualmente
+      const equalPercentage = 100 / props.participantesIds.length;
+      props.participantesIds.forEach(id => {
+        newDetails.set(id, equalPercentage);
+      });
+    } else if (newType === 'amount') {
+      // Dividir o valor total igualmente, garantindo que a soma seja exata
+      const valorTotal = Number(props.valor) || 0;
+      const baseAmount = Math.floor((valorTotal * 100) / props.participantesIds.length) / 100;
+      let distributed = 0;
+      
+      props.participantesIds.forEach((id, index) => {
+        if (index === props.participantesIds.length - 1) {
+          // Último participante recebe o que sobrou para garantir soma exata
+          newDetails.set(id, valorTotal - distributed);
+        } else {
+          newDetails.set(id, baseAmount);
+          distributed += baseAmount;
+        }
+      });
+    } else if (newType === 'shares') {
+      // Dividir com 1 parte para cada participante
+      props.participantesIds.forEach(id => {
+        newDetails.set(id, 1);
+      });
+    }
+  }
+  
+  emit('update:divisionDetails', newDetails);
   emit('update:divisionError', '');
 });
 
@@ -133,18 +166,39 @@ function toggleParticipant(memberId: UUID) {
   const newDetails = new Map(props.divisionDetails);
 
   if (index > -1) {
+    // Deselecting participant
     newIds.splice(index, 1);
     newDetails.delete(memberId);
   } else {
+    // Selecting participant - distribute equally
     newIds.push(memberId);
-    if (!newDetails.has(memberId)) {
-      if (props.divisionType === 'percentage') {
-        newDetails.set(memberId, 0);
-      } else if (props.divisionType === 'amount') {
-        newDetails.set(memberId, 0);
-      } else if (props.divisionType === 'shares') {
-        newDetails.set(memberId, 1);
-      }
+    
+    // Redistribute equally among all selected participants (including the new one)
+    newDetails.clear();
+    if (props.divisionType === 'percentage') {
+      const equalPercentage = 100 / newIds.length;
+      newIds.forEach(id => {
+        newDetails.set(id, equalPercentage);
+      });
+    } else if (props.divisionType === 'amount') {
+      // Dividir o valor total igualmente, garantindo que a soma seja exata
+      const valorTotal = Number(props.valor) || 0;
+      const baseAmount = Math.floor((valorTotal * 100) / newIds.length) / 100;
+      let distributed = 0;
+      
+      newIds.forEach((id, idx) => {
+        if (idx === newIds.length - 1) {
+          // Último participante recebe o que sobrou para garantir soma exata
+          newDetails.set(id, valorTotal - distributed);
+        } else {
+          newDetails.set(id, baseAmount);
+          distributed += baseAmount;
+        }
+      });
+    } else if (props.divisionType === 'shares') {
+      newIds.forEach(id => {
+        newDetails.set(id, 1);
+      });
     }
   }
 
