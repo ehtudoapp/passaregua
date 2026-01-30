@@ -118,7 +118,7 @@
   - Positivo (verde): tem a receber
   - Negativo (vermelho): deve
 - [x] Registrar pagamento entre membros
-- [ ] Criar um botão com icone("document-currency-dollar") para criar uma transferencia conforme a sugestão mostrada para quitar a conta
+- [x] Criar um botão com icone("document-currency-dollar") para criar uma transferencia conforme a sugestão mostrada para quitar a conta
 
 ---
 
@@ -129,6 +129,7 @@
 **Funcionalidades:**
 - [x] Adicionar/remover participantes do grupo
 - [x] Definir usuário ativo (facilita lançamentos)
+- [ ] Permitir alterar o nome do membro do grupo
 
 ---
 
