@@ -41,8 +41,33 @@ const divisionUnits: Record<DivisionType, string> = {
   shares: 'partes'
 };
 
-watch(() => props.divisionType, () => {
-  emit('update:divisionDetails', new Map());
+watch(() => props.divisionType, (newType) => {
+  const newDetails = new Map<UUID, number>();
+  
+  // Quando mudar o tipo de divisão, distribuir igualmente pelos participantes selecionados
+  if (props.participantesIds.length > 0) {
+    if (newType === 'percentage') {
+      // Dividir 100% igualmente
+      const equalPercentage = 100 / props.participantesIds.length;
+      props.participantesIds.forEach(id => {
+        newDetails.set(id, equalPercentage);
+      });
+    } else if (newType === 'amount') {
+      // Dividir o valor total igualmente
+      const valorTotal = Number(props.valor) || 0;
+      const equalAmount = valorTotal / props.participantesIds.length;
+      props.participantesIds.forEach(id => {
+        newDetails.set(id, equalAmount);
+      });
+    } else if (newType === 'shares') {
+      // Dividir com 1 parte para cada participante
+      props.participantesIds.forEach(id => {
+        newDetails.set(id, 1);
+      });
+    }
+  }
+  
+  emit('update:divisionDetails', newDetails);
   emit('update:divisionError', '');
 });
 

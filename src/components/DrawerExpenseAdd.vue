@@ -173,7 +173,7 @@ function resetForm() {
     valor: '',
     data: new Date().toISOString().split('T')[0],
     pagador_id: currentUserId.value || '',
-    participantes_ids: [],
+    participantes_ids: members.map(m => m.id),
     divisionType: 'equal',
     divisionDetails: new Map()
   };
