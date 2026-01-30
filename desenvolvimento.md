@@ -40,6 +40,8 @@
 | `id`       | UUID v4 | Identificador único          |
 | `group_id` | UUID v4 | FK para `groups.id`          |
 | `nome`     | string  | Nome do participante         |
+| `deleted`  | bool    | Se participante foi deletado |
+
 
 ### `transactions`
 | Campo        | Tipo                       | Descrição                     |
@@ -51,6 +53,8 @@
 | `descricao`  | string                     | Descrição da transação        |
 | `data`       | ISO 8601                   | Data da transação             |
 | `pagador_id` | UUID v4                    | FK para `members.id`          |
+| `deleted`    | bool                       | Se transação foi deletado     |
+
 
 ### `splits`
 | Campo          | Tipo    | Descrição                        |
@@ -60,6 +64,8 @@
 | `devedor_id`   | UUID v4 | FK para `members.id`             |
 | `valor_pago`   | number  | Quanto o devedor já pagou        |
 | `valor_devido` | number  | Quanto o devedor deve            |
+| `deleted`      | bool    | Se dicisão foi ou não deletada   |
+
 
 ---
 
@@ -79,7 +85,7 @@
 - [x] Adicionar participantes ao grupo
 - [x] Selecionar grupo ativo
 - [x] apagar grupo localmente
-- [x] ao criar o primeiro grupo deixar ele com grupo ativo
+- [ ] FIX: ao criar o primeiro grupo deixar ele com grupo ativo
 - [x] ao importar grupo se for o primeiro ele já deve ser o grupo ativo
 - [x] ao clicar no card do grupo se for o grupo ativo aparece o drawer de edição, se não for o ativo tornar esse grupo ativo e redirecionar para aba de lançamentos
 
@@ -92,12 +98,12 @@
 **FAB:** ➕ Adicionar despesa
 
 **Drawer de nova despesa:**
-- [+] Campo: Data (default: hoje)
-- [+] Campo: Valor total
-- [+] Campo: Quem pagou (select de membros)
-- [+] Campo: Descrição
-- [+] Lista: Divisão por participante
-- [ ] fix: detalhes da despesa mostrando NAN no dia
+- [x] Campo: Data (default: hoje)
+- [x] Campo: Valor total
+- [x] Campo: Quem pagou (select de membros)
+- [x] Campo: Descrição
+- [x] Lista: Divisão por participante
+- [x] fix: detalhes da despesa mostrando NAN no dia
 
 ---
 
@@ -170,3 +176,4 @@
 - [x] animar botão de sincronizar
 - [x] snackbar inferior para mensagens
 - [x] mensagem de sicronia concluida
+- [ ] sempre deixar os participantes selecionados, dividindo igualmente em todas os tipos de divisões
