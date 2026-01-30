@@ -70,8 +70,10 @@ export function createGroup(data: { nome: string; members?: string[] }): Group {
     });
   }
   
-  // Definir como grupo ativo automaticamente
-  setActiveGroupStorage(group.id);
+  // Definir como grupo ativo automaticamente se nenhum estiver ativo
+  if (getActiveGroupId() === null) {
+    setActiveGroupStorage(group.id);
+  }
   
   return group;
 }

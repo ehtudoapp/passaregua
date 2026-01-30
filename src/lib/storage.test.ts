@@ -66,6 +66,22 @@ describe('Storage', () => {
       expect(members.map(m => m.nome)).toEqual(['Alice', 'Bob', 'Carol']);
     });
 
+    it('should set the first created group as active', () => {
+      expect(getActiveGroupId()).toBeNull();
+      
+      const group = createGroup({ nome: 'First Group' });
+      
+      expect(getActiveGroupId()).toBe(group.id);
+    });
+
+    it('should not change active group when creating additional groups', () => {
+      const group1 = createGroup({ nome: 'First Group' });
+      expect(getActiveGroupId()).toBe(group1.id);
+      
+      createGroup({ nome: 'Second Group' });
+      expect(getActiveGroupId()).toBe(group1.id);
+    });
+
     it('should get all groups', () => {
       createGroup({ nome: 'Group 1' });
       createGroup({ nome: 'Group 2' });

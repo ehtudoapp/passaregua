@@ -16,6 +16,7 @@ import AppHeader from '../components/AppHeader.vue';
 import AppNavbar from '../components/AppNavbar.vue';
 import {
   createGroup,
+  getGroups,
   getGroupsWithMemberCount,
   type GroupWithCount,
   updateGroupName,
@@ -140,6 +141,9 @@ function handleCreateGroup() {
     return;
   }
 
+  // Check if this is the first group
+  const wasFirstGroup = getGroups().length === 0;
+
   // Get non-empty member names
   const members = memberInputs.value
     .map(input => input.name.trim())
@@ -151,12 +155,21 @@ function handleCreateGroup() {
     members
   });
 
-  // Reload groups and close drawer
-  loadGroups();
+  // Close drawer
   closeDrawer();
   
   // Sincronizar imediatamente
   triggerSync();
+
+  if (wasFirstGroup) {
+    // Redirecionar para despesas se foi o primeiro grupo
+    setTimeout(() => {
+      window.location.href = '/expenses';
+    }, 100);
+  } else {
+    // Atualizar lista de grupos se já existiam grupos
+    loadGroups();
+  }
 }
 
 function openEditDrawer(group: GroupWithCount) {
