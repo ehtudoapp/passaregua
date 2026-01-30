@@ -10,6 +10,9 @@ import Drawer from './Drawer.vue';
 
 const props = defineProps<{
   modelValue: boolean;
+  suggestedPayerId?: string;
+  suggestedReceiverId?: string;
+  suggestedAmount?: number;
 }>();
 
 const emit = defineEmits<{
@@ -55,6 +58,16 @@ watch(() => props.modelValue, (isOpen) => {
     // Reload members when modal opens
     if (activeGroupId.value) {
       members.value = getGroupMembers(activeGroupId.value);
+    }
+    // Pre-fill if suggestion props provided
+    if (props.suggestedPayerId) {
+      formData.value.pagador_id = props.suggestedPayerId;
+    }
+    if (props.suggestedReceiverId) {
+      formData.value.recebedor_id = props.suggestedReceiverId;
+    }
+    if (props.suggestedAmount !== undefined) {
+      formData.value.valor = (props.suggestedAmount / 100).toFixed(2);
     }
   }
 });

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref } from 'vue';
-import { UserGroupIcon, BanknotesIcon } from '@heroicons/vue/24/solid';
+import { UserGroupIcon, BanknotesIcon, CurrencyDollarIcon } from '@heroicons/vue/24/solid';
 import { useActiveGroup } from '../composables/useActiveGroup';
 import { useBalances } from '../composables/useBalances';
 import AppHeader from '../components/AppHeader.vue';
@@ -14,6 +14,9 @@ const { balances, suggestedTransactions, totalExpenses, refresh } = useBalances(
 
 // Modal state
 const paymentModalOpen = ref(false);
+const suggestedPayerId = ref<string>();
+const suggestedReceiverId = ref<string>();
+const suggestedAmount = ref<number>();
 
 // Format currency from cents to BRL
 function formatCurrency(cents: number): string {
@@ -45,7 +48,16 @@ function handlePaymentAdded() {
   refresh();
 }
 
-function openPaymentModal() {
+function openPaymentModal(suggestion?: { fromId: string; toId: string; amount: number }) {
+  if (suggestion) {
+    suggestedPayerId.value = suggestion.fromId;
+    suggestedReceiverId.value = suggestion.toId;
+    suggestedAmount.value = suggestion.amount;
+  } else {
+    suggestedPayerId.value = undefined;
+    suggestedReceiverId.value = undefined;
+    suggestedAmount.value = undefined;
+  }
   paymentModalOpen.value = true;
 }
 </script>
@@ -93,7 +105,8 @@ function openPaymentModal() {
             </div>
             <div v-else class="space-y-2">
               <div v-for="(transaction, index) in suggestedTransactions" :key="index"
-                class="bg-sky-50 border border-sky-200 px-4 py-3 rounded-lg text-sm">
+                class="bg-sky-50 border border-sky-200 px-4 py-3 rounded-lg text-sm cursor-pointer hover:bg-sky-100"
+                @click="openPaymentModal({ fromId: transaction.fromId, toId: transaction.toId, amount: transaction.amount })">
                 <div class="flex items-center justify-between">
                   <div class="flex items-center gap-2">
                     <span class="font-semibold text-gray-900">{{ transaction.from }}</span>
@@ -102,6 +115,7 @@ function openPaymentModal() {
                     <span class="text-gray-500">para</span>
                     <span class="font-semibold text-gray-900">{{ transaction.to }}</span>
                   </div>
+                  <CurrencyDollarIcon class="w-5 h-5 text-sky-600" />
                 </div>
               </div>
             </div>
@@ -125,7 +139,7 @@ function openPaymentModal() {
       <div class="max-w-4xl mx-auto w-full px-6 pointer-events-auto flex justify-end">
         <Button variant="primary"
           class="rounded-full px-6 py-3 flex items-center justify-center gap-2 shadow-lg text-white font-medium"
-          @click="openPaymentModal">
+          @click="openPaymentModal()">
           <BanknotesIcon class="w-5 h-5" />
           <span>Realizar pagamento</span>
         </Button>
@@ -136,6 +150,7 @@ function openPaymentModal() {
     <AppNavbar />
 
     <!-- Payment Drawer -->
-    <DrawerNewPaymentAdd v-if="activeGroupId" v-model="paymentModalOpen" @payment-added="handlePaymentAdded" />
+    <DrawerNewPaymentAdd v-if="activeGroupId" v-model="paymentModalOpen" @payment-added="handlePaymentAdded"
+      :suggested-payer-id="suggestedPayerId" :suggested-receiver-id="suggestedReceiverId" :suggested-amount="suggestedAmount" />
   </div>
 </template>

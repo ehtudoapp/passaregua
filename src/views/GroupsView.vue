@@ -469,7 +469,7 @@ function handleDeleteConfirm() {
   </Drawer>
 
   <!-- Delete Confirmation Modal -->
-  <div v-if="deleteConfirmOpen" class="fixed inset-0 z-60 flex items-center justify-center bg-black bg-opacity-50 px-4">
+  <div v-if="deleteConfirmOpen" class="fixed inset-0 z-60 flex items-center justify-center bg-black/50 px-4">
     <div class="max-w-md w-full">
       <div class="bg-white rounded-lg shadow-lg p-8 text-center space-y-4">
         <TrashIcon class="w-16 h-16 mx-auto text-rose-500" />
