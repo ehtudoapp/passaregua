@@ -6,15 +6,6 @@ Aplicação SPA para divisão inteligente de despesas entre amigos. Com sincroni
 
 O Passaregua é uma aplicação web que calcula automaticamente o acerto de contas entre amigos, utilizando um algoritmo inteligente que **minimiza o número de transações necessárias**.
 
-## 🚀 Tecnologias
-
-- **pocketbase** - Backend num unico binario escrito em GO, com possibilidade de extensões
-- **Vue 3** - Framework JavaScript progressivo
-- **TypeScript** - Tipagem estática para JavaScript
-- **Vite** - Build tool rápido e moderno
-- **Tailwind CSS** - Framework CSS utilitário
-- **Vitest** - Framework de testes unitários
-
 ## 📊 Como Funciona
 
 O algoritmo implementado segue a seguinte lógica:
@@ -34,6 +25,15 @@ Isso garante o **número mínimo de transações**, evitando voltas desnecessár
 1. **Adicione as pessoas** que participaram das despesas
 2. **Registre as despesas** informando quem pagou e o valor
 3. **Calcule o acerto** e veja exatamente quem deve pagar para quem
+
+## 🚀 Tecnologias
+
+- **pocketbase** - Backend num unico binario escrito em GO, com possibilidade de extensões
+- **Vue 3** - Framework JavaScript progressivo
+- **TypeScript** - Tipagem estática para JavaScript
+- **Vite** - Build tool rápido e moderno
+- **Tailwind CSS** - Framework CSS utilitário
+- **Vitest** - Framework de testes unitários
 
 ## 🛠️ Desenvolvimento
 

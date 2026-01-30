@@ -1,19 +1,11 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue';
-import {
-  XMarkIcon,
-  PlusIcon,
-  MinusIcon,
-  UserGroupIcon,
-  CheckCircleIcon,
-  ClipboardDocumentIcon,
-  TrashIcon
-} from '@heroicons/vue/24/solid';
+import { ref } from 'vue';
+import { PlusIcon, UserGroupIcon, CheckCircleIcon } from '@heroicons/vue/24/solid';
 import Button from '../components/Button.vue';
-import Input from '../components/Input.vue';
-import Drawer from '../components/Drawer.vue';
 import AppHeader from '../components/AppHeader.vue';
 import AppNavbar from '../components/AppNavbar.vue';
+import DrawerGroupCreate from '../components/DrawerGroupCreate.vue';
+import DrawerGroupDetails from '../components/DrawerGroupDetails.vue';
 import {
   createGroup,
   getGroups,
@@ -27,13 +19,6 @@ import { useSyncStatus } from '../composables/useSyncStatus';
 
 // State
 const drawerOpen = ref(false);
-const groupName = ref('');
-const groupNameError = ref('');
-const memberInputs = ref<{ id: number; name: string; error?: string }[]>([
-  { id: 1, name: '' }
-]);
-const nextMemberId = ref(2);
-
 const groups = ref<GroupWithCount[]>([]);
 const { activeGroupId, setActiveGroupId } = useActiveGroup();
 const { triggerSync } = useSyncStatus();
@@ -41,19 +26,6 @@ const { triggerSync } = useSyncStatus();
 // Edit drawer state
 const editDrawerOpen = ref(false);
 const editingGroup = ref<GroupWithCount | null>(null);
-const editGroupName = ref('');
-const editGroupNameError = ref('');
-const copySuccess = ref(false);
-
-// Delete confirmation modal state
-const deleteConfirmOpen = ref(false);
-const groupToDelete = ref<GroupWithCount | null>(null);
-
-// Computed
-const groupUrl = computed(() => {
-  if (!editingGroup.value) return '';
-  return `${window.location.origin}/groups/${editingGroup.value.id}`;
-});
 
 // Load groups on mount
 loadGroups();
@@ -79,176 +51,61 @@ function handleGroupCardClick(group: GroupWithCount) {
 
 function openDrawer() {
   drawerOpen.value = true;
-  resetForm();
 }
 
 function closeDrawer() {
   drawerOpen.value = false;
-  resetForm();
-}
-
-function resetForm() {
-  groupName.value = '';
-  groupNameError.value = '';
-  memberInputs.value = [{ id: 1, name: '' }];
-  nextMemberId.value = 2;
-}
-
-function addMemberInput() {
-  memberInputs.value.push({ id: nextMemberId.value++, name: '' });
-}
-
-function removeMemberInput(id: number) {
-  if (memberInputs.value.length > 1) {
-    memberInputs.value = memberInputs.value.filter(input => input.id !== id);
-  }
-}
-
-function validateGroupName(): boolean {
-  if (!groupName.value.trim()) {
-    groupNameError.value = 'Nome do grupo não pode ser vazio';
-    return false;
-  }
-  groupNameError.value = '';
-  return true;
-}
-
-function validateMembers(): boolean {
-  let isValid = true;
-  const names = new Set<string>();
-
-  memberInputs.value.forEach(input => {
-    input.error = '';
-    const trimmedName = input.name.trim();
-    const lowerCaseName = trimmedName.toLowerCase();
-
-    if (trimmedName && names.has(lowerCaseName)) {
-      input.error = 'Nome duplicado';
-      isValid = false;
-    } else if (trimmedName) {
-      names.add(lowerCaseName);
-    }
-  });
-
-  return isValid;
-}
-
-function handleCreateGroup() {
-  const nameValid = validateGroupName();
-  const membersValid = validateMembers();
-
-  if (!nameValid || !membersValid) {
-    return;
-  }
-
-  // Check if this is the first group
-  const wasFirstGroup = getGroups().length === 0;
-
-  // Get non-empty member names
-  const members = memberInputs.value
-    .map(input => input.name.trim())
-    .filter(name => name !== '');
-
-  // Create group
-  createGroup({
-    nome: groupName.value.trim(),
-    members
-  });
-
-  // Close drawer
-  closeDrawer();
-  
-  // Sincronizar imediatamente
-  triggerSync();
-
-  if (wasFirstGroup) {
-    // Redirecionar para despesas se foi o primeiro grupo
-    setTimeout(() => {
-      window.location.href = '/expenses';
-    }, 100);
-  } else {
-    // Atualizar lista de grupos se já existiam grupos
-    loadGroups();
-  }
 }
 
 function openEditDrawer(group: GroupWithCount) {
   editingGroup.value = group;
-  editGroupName.value = group.nome;
-  editGroupNameError.value = '';
   editDrawerOpen.value = true;
 }
 
 function closeEditDrawer() {
   editDrawerOpen.value = false;
   editingGroup.value = null;
-  editGroupName.value = '';
-  editGroupNameError.value = '';
-  copySuccess.value = false;
 }
 
-function validateEditGroupName(): boolean {
-  if (!editGroupName.value.trim()) {
-    editGroupNameError.value = 'Nome do grupo não pode ser vazio';
-    return false;
+// Event handlers from child components
+function onCreateGroup(payload: { nome: string; members: string[] }) {
+  const wasFirstGroup = getGroups().length === 0;
+
+  createGroup({ nome: payload.nome, members: payload.members });
+  closeDrawer();
+
+  // Sincronizar imediatamente
+  triggerSync();
+
+  if (wasFirstGroup) {
+    setTimeout(() => {
+      window.location.href = '/expenses';
+    }, 100);
+  } else {
+    loadGroups();
   }
-  editGroupNameError.value = '';
-  return true;
 }
 
-function handleSaveGroupName() {
-  if (!validateEditGroupName() || !editingGroup.value) {
-    return;
-  }
-
+function onSaveGroup(payload: { id: string | number; nome: string }) {
   try {
-    updateGroupName(editingGroup.value.id, editGroupName.value.trim());
+    updateGroupName(payload.id as any, payload.nome);
     loadGroups();
     closeEditDrawer();
   } catch (error) {
-    editGroupNameError.value = error instanceof Error ? error.message : 'Erro ao atualizar grupo';
+    console.error(error);
   }
 }
 
-function handleActivateGroup() {
-  if (editingGroup.value) {
-    setActiveGroupId(editingGroup.value.id);
-    groups.value = getGroupsWithMemberCount();
-    closeEditDrawer();
-  }
-}
-
-function copyGroupUrl() {
-  if (!editingGroup.value) return;
-  
-  const url = groupUrl.value;
-  navigator.clipboard.writeText(url).then(() => {
-    copySuccess.value = true;
-    setTimeout(() => {
-      copySuccess.value = false;
-    }, 2000);
-  });
-}
-
-function openDeleteConfirm(group: GroupWithCount) {
-  groupToDelete.value = group;
-  deleteConfirmOpen.value = true;
-}
-
-function closeDeleteConfirm() {
-  deleteConfirmOpen.value = false;
-  groupToDelete.value = null;
-}
-
-function handleDeleteConfirm() {
-  if (!groupToDelete.value) return;
-  
-  removeGroup(groupToDelete.value.id);
-  loadGroups();
-  closeDeleteConfirm();
+function onActivateGroup(id: string | number) {
+  setActiveGroupId(id as any);
+  groups.value = getGroupsWithMemberCount();
   closeEditDrawer();
-  
-  // Sincronizar após deleção
+}
+
+function onDeleteGroup(id: string | number) {
+  removeGroup(id as any);
+  loadGroups();
+  closeEditDrawer();
   triggerSync();
 }
 </script>
@@ -319,185 +176,15 @@ function handleDeleteConfirm() {
   <!-- Bottom Navigation -->
   <AppNavbar />
 
-  <!-- Drawer for Adding Group -->
-  <Drawer v-model="drawerOpen" position="right" width-class="w-full max-w-xl">
-    <template #header="{ close }">
-      <div class="flex items-center justify-between px-4 py-4">
-        <h1 class="text-2xl font-bold text-gray-900">Novo Grupo</h1>
-        <Button variant="icon" @click="close">
-          <XMarkIcon class="w-6 h-6" />
-        </Button>
-      </div>
-    </template>
+  <!-- Drawers components -->
+  <DrawerGroupCreate v-model="drawerOpen" @create="onCreateGroup" />
 
-    <div class="px-6 py-4 space-y-6">
-      <!-- Section 1: Create Group -->
-      <div class="border-b border-gray-200 pb-6">
-        <h3 class="text-lg font-semibold text-gray-900 mb-4">Criar Grupo</h3>
-        <div class="space-y-4">
-          <Input v-model="groupName" label="Nome do Grupo" placeholder="Ex: Viagem à praia" :error="groupNameError"
-            @blur="validateGroupName" />
-        </div>
-      </div>
-
-      <!-- Section 2: Add Users -->
-      <div class="pb-6">
-        <div class="flex items-center justify-between mb-4">
-          <h3 class="text-lg font-semibold text-gray-900">Adicionar membros</h3>
-          <Button variant="primary" @click="addMemberInput">
-            <div class="flex items-center gap-1">
-              <PlusIcon class="w-4 h-4" />
-              <span class="text-sm">Adicionar</span>
-            </div>
-          </Button>
-        </div>
-
-        <div class="space-y-3">
-          <div v-for="input in memberInputs" :key="input.id" class="flex items-start gap-2">
-            <div class="flex-1">
-              <Input v-model="input.name" placeholder="Nome do membro" :error="input.error" @blur="validateMembers" />
-            </div>
-            <Button variant="icon" :disabled="memberInputs.length === 1" @click="removeMemberInput(input.id)"
-              class="mt-1">
-              <MinusIcon class="w-5 h-5 text-rose-500" />
-            </Button>
-          </div>
-        </div>
-
-        <p class="mt-3 text-sm text-gray-500">
-          Você pode deixar campos vazios se não quiser adicionar membros agora.
-        </p>
-      </div>
-
-      <!-- Create Button -->
-      <div class="sticky bottom-0 bg-white pt-4 border-t border-gray-200">
-        <Button variant="primary" class="w-full" @click="handleCreateGroup">
-          Criar Grupo
-        </Button>
-      </div>
-    </div>
-  </Drawer>
-
-  <!-- Drawer for Editing Group Name -->
-  <Drawer v-model="editDrawerOpen" position="right" width-class="w-full max-w-xl">
-    <template #header="{ close }">
-      <div class="flex items-center justify-between px-4 py-4">
-        <h1 class="text-2xl font-bold text-gray-900">Editar Grupo</h1>
-        <Button variant="icon" @click="close">
-          <XMarkIcon class="w-6 h-6" />
-        </Button>
-      </div>
-    </template>
-
-    <div class="px-6 py-4 space-y-6">
-      <!-- Edit Group Name Section -->
-      <div class="border-b border-gray-200 pb-6">
-        <h3 class="text-lg font-semibold text-gray-900 mb-4">Editar Nome do Grupo</h3>
-        <div class="space-y-4">
-          <Input v-model="editGroupName" label="Nome do Grupo" placeholder="Ex: Viagem à praia"
-            :error="editGroupNameError" @blur="validateEditGroupName" />
-        </div>
-      </div>
-
-
-
-      <!-- Activate Group Section -->
-      <div class="pb-6">
-        <h3 class="text-lg font-semibold text-gray-900 mb-4">Ativar Grupo</h3>
-        <p class="text-sm text-gray-600 mb-3">
-          {{ activeGroupId === editingGroup?.id ? 'Este é o grupo ativo' : 'Clique abaixo para ativar este grupo' }}
-        </p>
-        <Button v-if="activeGroupId !== editingGroup?.id" variant="primary" class="w-full" @click="handleActivateGroup">
-          Tornar o grupo ativo
-        </Button>
-        <div v-else
-          class="w-full px-4 py-2 bg-emerald-50 border border-emerald-200 rounded-lg text-emerald-700 text-sm text-center">
-          ✓ Grupo ativo
-        </div>
-      </div>
-
-      <!-- Save Button -->
-      <div class="sticky bottom-0 bg-white pt-4 border-t border-gray-200">
-        <Button variant="primary" class="w-full" @click="handleSaveGroupName">
-          Salvar Alterações
-        </Button>
-      </div>
-
-            <!-- Group URL Section -->
-      <div class="border-b border-gray-200 pb-6">
-        <h3 class="text-lg font-semibold text-gray-900 mb-4">Endereço do Grupo</h3>
-        <p class="text-sm text-gray-600 mb-3">
-          Compartilhe este endereço para acessar diretamente este grupo
-        </p>
-        <div class="flex gap-2">
-          <div class="flex-1">
-            <Input 
-              :model-value="groupUrl"
-              label=""
-              :readonly="true"
-              class="font-mono text-sm"
-            />
-          </div>
-          <Button 
-            variant="primary" 
-            @click="copyGroupUrl"
-            class="mt-0 px-4 py-2 flex items-center gap-2"
-            :class="copySuccess ? 'bg-emerald-600 hover:bg-emerald-700' : ''"
-          >
-            <ClipboardDocumentIcon class="w-5 h-5" />
-            <span>{{ copySuccess ? 'Copiado!' : 'Copiar' }}</span>
-          </Button>
-        </div>
-      </div>
-
-      <!-- Delete Group Section -->
-      <div class="border-t border-gray-200 pt-6">
-        <h3 class="text-lg font-semibold text-gray-900 mb-4">Deletar Grupo</h3>
-        <p class="text-sm text-gray-600 mb-3">
-          Remova este grupo do seu dispositivo. Você pode reimportá-lo usando o link de compartilhamento.
-        </p>
-        <Button 
-          variant="primary"
-          class="w-full bg-rose-600 hover:bg-rose-700 text-white flex items-center justify-center gap-2"
-          @click="openDeleteConfirm(editingGroup!)"
-        >
-          <TrashIcon class="w-5 h-5" />
-          <span>Deletar Grupo</span>
-        </Button>
-      </div>
-    </div>
-  </Drawer>
-
-  <!-- Delete Confirmation Modal -->
-  <div v-if="deleteConfirmOpen" class="fixed inset-0 z-60 flex items-center justify-center bg-black/50 px-4">
-    <div class="max-w-md w-full">
-      <div class="bg-white rounded-lg shadow-lg p-8 text-center space-y-4">
-        <TrashIcon class="w-16 h-16 mx-auto text-rose-500" />
-        <h2 class="text-2xl font-bold text-gray-900">Deletar Grupo?</h2>
-        <p class="text-gray-600">
-          Tem certeza que deseja deletar <span class="font-semibold">{{ groupToDelete?.nome }}</span>?
-        </p>
-        <p class="text-sm text-gray-500">
-          Esta ação é irreversível localmente, mas você pode reimportar o grupo usando o link de compartilhamento.
-        </p>
-        
-        <div class="flex gap-3 pt-4">
-          <Button 
-            variant="primary"
-            class="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-900"
-            @click="closeDeleteConfirm"
-          >
-            Não, cancelar
-          </Button>
-          <Button 
-            variant="primary"
-            class="flex-1 bg-rose-600 hover:bg-rose-700 text-white"
-            @click="handleDeleteConfirm"
-          >
-            Sim, deletar
-          </Button>
-        </div>
-      </div>
-    </div>
-  </div>
+  <DrawerGroupDetails
+    v-model="editDrawerOpen"
+    :group="editingGroup"
+    :activeGroupId="activeGroupId"
+    @save="onSaveGroup"
+    @activate="onActivateGroup"
+    @delete="onDeleteGroup"
+  />
 </template>
