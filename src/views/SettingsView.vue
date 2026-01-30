@@ -4,7 +4,8 @@ import {
     PlusIcon,
     MinusIcon,
     UserGroupIcon,
-    UserIcon
+    UserIcon,
+    PencilIcon
 } from '@heroicons/vue/24/solid';
 import Button from '../components/Button.vue';
 import Input from '../components/Input.vue';
@@ -16,7 +17,8 @@ import {
     getGroupMembers,
     addMemberToGroup,
     removeMember,
-    memberHasSplits
+    memberHasSplits,
+    updateMember
 } from '../lib/storage';
 import { useActiveGroup } from '../composables/useActiveGroup';
 import { useCurrentUsername } from '../composables/useCurrentUsername';
@@ -36,6 +38,10 @@ const showIndicator = ref(true);
 const editingUsername = ref(false);
 const usernameInput = ref('');
 const usernameError = ref('');
+const editMemberModalOpen = ref(false);
+const editingMember = ref<Member | null>(null);
+const editMemberNameInput = ref('');
+const editMemberNameError = ref('');
 
 // Load group and members on mount
 onMounted(() => {
@@ -169,6 +175,68 @@ function canDeleteMember(memberId: string): boolean {
     return deletableMembers.value.has(memberId);
 }
 
+function openEditMemberModal(member: Member) {
+    editingMember.value = member;
+    editMemberNameInput.value = member.nome;
+    editMemberNameError.value = '';
+    editMemberModalOpen.value = true;
+}
+
+function closeEditMemberModal() {
+    editMemberModalOpen.value = false;
+    editingMember.value = null;
+    editMemberNameInput.value = '';
+    editMemberNameError.value = '';
+}
+
+function validateEditMemberName(): boolean {
+    const trimmedName = editMemberNameInput.value.trim();
+
+    if (!trimmedName) {
+        editMemberNameError.value = 'Nome do membro não pode ser vazio';
+        return false;
+    }
+
+    // Check for duplicates (case-insensitive), excluding the current member
+    const lowerCaseName = trimmedName.toLowerCase();
+    const hasDuplicate = members.value.some((member: Member) => 
+        member.id !== editingMember.value?.id && member.nome.toLowerCase() === lowerCaseName
+    );
+
+    if (hasDuplicate) {
+        editMemberNameError.value = 'Este nome já existe no grupo';
+        return false;
+    }
+
+    editMemberNameError.value = '';
+    return true;
+}
+
+function handleSaveEditMember() {
+    if (!validateEditMemberName() || !editingMember.value) {
+        return;
+    }
+
+    const updatedMember = updateMember(editingMember.value.id, { 
+        nome: editMemberNameInput.value.trim() 
+    });
+
+    if (updatedMember) {
+        // Update the members list
+        const index = members.value.findIndex((m: Member) => m.id === editingMember.value!.id);
+        if (index !== -1) {
+            members.value[index] = updatedMember;
+        }
+
+        // Sincronizar imediatamente após editar
+        triggerSync();
+
+        // Close the modal
+        closeEditMemberModal();
+    }
+}
+
+
 </script>
 
 <template>
@@ -260,7 +328,13 @@ function canDeleteMember(memberId: string): boolean {
                                 <div v-for="member in members" :key="member.id"
                                     class="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition">
                                     <div class="flex-1">
-                                        <span class="text-gray-900">{{ member.nome }}</span>
+                                        <button 
+                                            @click="openEditMemberModal(member)"
+                                            class="text-left text-gray-900 hover:text-emerald-700 transition flex items-center gap-2"
+                                        >
+                                            <span>{{ member.nome }}</span>
+                                            <PencilIcon class="w-3 h-3 text-gray-400" />
+                                        </button>
                                         <p v-if="!canDeleteMember(member.id)" class="text-xs text-gray-500 mt-1">
                                             Possui despesas registradas
                                         </p>
@@ -285,4 +359,34 @@ function canDeleteMember(memberId: string): boolean {
 
     <!-- Bottom Navigation -->
     <AppNavbar />
+
+    <!-- Edit Member Name Modal -->
+    <div v-if="editMemberModalOpen" class="fixed inset-0 z-60 flex items-center justify-center bg-black/50 px-4">
+        <div class="max-w-md w-full">
+            <div class="bg-white rounded-lg shadow-lg p-8 text-center space-y-4">
+                <PencilIcon class="w-16 h-16 mx-auto text-emerald-500" />
+                <h2 class="text-2xl font-bold text-gray-900">Alterar Nome</h2>
+                <p class="text-gray-600">
+                    Editar o nome de <span class="font-semibold">{{ editingMember?.nome }}</span>
+                </p>
+                <div class="text-left">
+                    <Input 
+                        v-model="editMemberNameInput" 
+                        label="Novo nome" 
+                        placeholder="Digite o novo nome"
+                        :error="editMemberNameError"
+                        @blur="validateEditMemberName"
+                    />
+                </div>
+                <div class="flex gap-3 pt-4">
+                    <Button variant="primary" class="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-900" @click="closeEditMemberModal">
+                        Cancelar
+                    </Button>
+                    <Button variant="primary" class="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white" @click="handleSaveEditMember">
+                        Salvar
+                    </Button>
+                </div>
+            </div>
+        </div>
+    </div>
 </template>
