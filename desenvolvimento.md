@@ -104,6 +104,7 @@
 - [x] Campo: Descrição
 - [x] Lista: Divisão por participante
 - [x] fix: detalhes da despesa mostrando NAN no dia
+- [ ] comando de edição da descrição da despesa, igual ao de edição do nome em /config
 
 ---
 
@@ -129,7 +130,7 @@
 **Funcionalidades:**
 - [x] Adicionar/remover participantes do grupo
 - [x] Definir usuário ativo (facilita lançamentos)
-- [ ] Permitir alterar o nome do membro do grupo
+- [x] Permitir alterar o nome do membro do grupo
 
 ---
 
@@ -177,4 +178,4 @@
 - [x] animar botão de sincronizar
 - [x] snackbar inferior para mensagens
 - [x] mensagem de sicronia concluida
-- [ ] sempre deixar os participantes selecionados, dividindo igualmente em todas os tipos de divisões
+- [x] sempre deixar os participantes selecionados, dividindo igualmente em todas os tipos de divisões
