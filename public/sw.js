@@ -2,10 +2,10 @@
 // Service Worker — Passa a Régua PWA
 // Estratégia: Cache-First para assets estáticos, Network-First para API
 
-const CACHE_NAME = 'passaregua-v2';
+const CACHE_NAME = 'passaregua-v3';
 const OFFLINE_URL = '/offline.html';
 
-// Assets que serão pré-cacheados na instalação do SW
+// Assets estáticos conhecidos pré-cacheados na instalação do SW
 const PRECACHE_URLS = [
   '/',
   '/index.html',
@@ -18,10 +18,38 @@ const PRECACHE_URLS = [
 self.addEventListener('install', (event) => {
   console.log('[SW] Installing…');
   event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => {
+    (async () => {
+      const cache = await caches.open(CACHE_NAME);
+
+      // 1. Cacheia os arquivos estáticos conhecidos
       console.log('[SW] Pre-caching shell assets');
-      return cache.addAll(PRECACHE_URLS);
-    })
+      await cache.addAll(PRECACHE_URLS);
+
+      // 2. Faz fetch do index.html para descobrir os bundles com hash do Vite
+      //    (ex: /assets/index-CecZZRkK.js, /assets/index-Cmi5z3wS.css)
+      //    e cacheia-os durante o install, garantindo app offline desde a 1ª visita.
+      try {
+        const response = await fetch('/');
+        const html = await response.text();
+        const assetUrls = [];
+
+        // Extrai URLs de scripts e CSS (DOMParser não está disponível em Service Workers)
+        for (const match of html.matchAll(/<script[^>]*\ssrc="([^"]+)"/g)) {
+          if (match[1].startsWith('/')) assetUrls.push(match[1]);
+        }
+        for (const match of html.matchAll(/<link[^>]*\shref="([^"]+\.css[^"]*)"/g)) {
+          if (match[1].startsWith('/')) assetUrls.push(match[1]);
+        }
+
+        if (assetUrls.length > 0) {
+          console.log('[SW] Pre-caching dynamic bundles:', assetUrls);
+          await cache.addAll(assetUrls);
+        }
+      } catch (err) {
+        // Offline durante o install (improvável, mas seguro falhar silenciosamente)
+        console.warn('[SW] Não foi possível cachear bundles dinâmicos:', err);
+      }
+    })()
   );
   // Força o SW novo a ativar imediatamente, sem esperar abas fecharem
   self.skipWaiting();
@@ -107,7 +135,11 @@ self.addEventListener('fetch', (event) => {
             caches.open(CACHE_NAME).then((cache) => cache.put(request, response.clone()));
             return response;
           })
-          .catch(() => cached); // se falhar e tiver cache, usa cache
+          .catch(() => {
+            if (cached) return cached;
+            // Nenhum cache e sem rede: retorna 503 para evitar TypeError no browser
+            return new Response('', { status: 503 });
+          });
 
         return cached || networkFetch;
       })
@@ -117,7 +149,9 @@ self.addEventListener('fetch', (event) => {
 
   // 4. Tudo mais → tenta rede, usa cache como fallback
   event.respondWith(
-    fetch(request).catch(() => caches.match(request))
+    fetch(request).catch(() => caches.match(request).then((cached) => {
+      return cached || new Response('', { status: 503 });
+    }))
   );
 });
 
