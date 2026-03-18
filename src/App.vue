@@ -37,12 +37,12 @@ onUnmounted(() => {
   <!-- Banner de update disponível -->
   <div
     v-if="updateAvailable"
-    class="fixed top-0 left-0 right-0 z-50 bg-indigo-600 text-white text-center text-sm py-1 px-3 flex items-center justify-center gap-3"
+    class="fixed top-0 left-0 right-0 z-50 bg-emerald-800 text-white text-center text-sm py-1 px-3 flex items-center justify-center gap-3"
     role="alert"
   >
     <span>🔄 Nova versão disponível!</span>
     <button
-      class="underline font-semibold hover:text-indigo-200"
+      class="underline font-semibold hover:text-emerald-200"
       @click="applyUpdate"
     >
       Atualizar agora
