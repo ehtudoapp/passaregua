@@ -2,6 +2,7 @@
   "name": "Passa a Régua",
   "short_name": "PassaRégua",
   "description": "Divisão de despesas de forma simples e offline",
+  "id": "app.ehtudo.passaregua",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#ffffff",
