@@ -2,13 +2,14 @@
 // Service Worker — Passa a Régua PWA
 // Estratégia: Cache-First para assets estáticos, Network-First para API
 
-const CACHE_NAME = 'passaregua-v1';
-const OFFLINE_URL = '/';
+const CACHE_NAME = 'passaregua-v2';
+const OFFLINE_URL = '/offline.html';
 
 // Assets que serão pré-cacheados na instalação do SW
 const PRECACHE_URLS = [
   '/',
   '/index.html',
+  '/offline.html',
   '/icon.svg',
   '/manifest.webmanifest',
 ];
@@ -79,9 +80,12 @@ self.addEventListener('fetch', (event) => {
           return response;
         })
         .catch(async () => {
-          // Offline → serve o shell cacheado (SPA vai cuidar do routing)
-          const cached = await caches.match(OFFLINE_URL);
-          return cached || new Response('App offline', { status: 503 });
+          // Offline → serve o app shell cacheado (SPA vai cuidar do routing)
+          const appShell = await caches.match('/');
+          if (appShell) return appShell;
+          // Último recurso: página offline dedicada
+          const offline = await caches.match(OFFLINE_URL);
+          return offline || new Response('App offline', { status: 503 });
         })
     );
     return;
