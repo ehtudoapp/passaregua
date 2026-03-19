@@ -1,0 +1,47 @@
+{
+  "name": "Passa a Régua",
+  "short_name": "Passa a Régua",
+  "description": "Divisão de despesas de forma simples e offline",
+  "id": "app.ehtudo.passaregua",
+  "start_url": "https://passaregua.ehtudo.app/",
+  "dir": "ltr",
+  "scope": "https://passaregua.ehtudo.app/",
+  "lang": "pt-BR",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#047857",
+  "orientation": "portrait-primary",
+  "categories": ["finance", "lifestyle", "social"],
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icon512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icon192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "/screenshot1.png",
+      "sizes": "780x1688",
+      "type": "image/png"
+    },
+    {
+      "src": "/screenshot2.png",
+      "sizes": "780x1688",
+      "type": "image/png"
+    }
+  ]
+}

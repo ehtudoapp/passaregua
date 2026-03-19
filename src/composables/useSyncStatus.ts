@@ -2,6 +2,7 @@ import { ref, computed, onMounted, onUnmounted } from 'vue';
 import { syncService } from '../lib/sync';
 import { useToast } from './useToast';
 import { useDataRefresh } from './useDataRefresh';
+import { isOnline } from '../lib/serviceWorker';
 
 const isSyncing = ref(false);
 const pendingCount = ref(0);
@@ -25,47 +26,55 @@ export function useSyncStatus() {
   }
 
   async function triggerSync(immediate = false) {
+    // Se offline, não tenta — só enfileira (o localStorage já guardou)
+    if (!isOnline.value) {
+      console.log('[Sync] Offline — sync adiada para quando a rede voltar');
+      return;
+    }
+
     // Se immediate=true, sincroniza agora. Senão, usa debounce.
     if (immediate) {
       await doSync(true);
       return;
     }
-    
+
     // Debounce: cancela timer anterior e agenda novo
     if (syncDebounceTimer) {
       clearTimeout(syncDebounceTimer);
     }
-    
+
     syncDebounceTimer = setTimeout(async () => {
       syncDebounceTimer = null;
       await doSync(false);
     }, SYNC_DEBOUNCE_MS);
   }
-  
+
   async function doSync(showToast = false) {
     if (isSyncing.value) {
       return; // Já está sincronizando
     }
-    
+
     try {
       isSyncing.value = true;
       await syncService.fullSync();
       updateStatus();
-      
+
       // Forçar refresh dos dados em todos os componentes
       triggerRefresh();
-      
+
       // Mostrar toast apenas quando usuário clica manualmente
       if (showToast) {
         success('Dados sincronizados com sucesso!');
       }
-      
+
     } catch (err) {
       console.error('Sync failed:', err);
       updateStatus();
-      
-      // Mostrar toast de erro sempre
-      error('Erro ao sincronizar dados. Tente novamente.');
+
+      // Mostrar toast de erro apenas quando usuário clica manualmente
+      if (showToast) {
+        error('Erro ao sincronizar dados. Tente novamente.');
+      }
     } finally {
       isSyncing.value = false;
     }
@@ -84,6 +93,7 @@ export function useSyncStatus() {
     pendingCount: computed(() => pendingCount.value),
     lastSyncTime: computed(() => lastSyncTime.value),
     hasErrors: computed(() => hasErrors.value),
+    isOnline,
     triggerSync,
     updateStatus
   };
