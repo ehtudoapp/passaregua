@@ -4,6 +4,7 @@ import GroupsView from '../views/GroupsView.vue';
 import GroupImportView from '../views/GroupImportView.vue';
 import ExpensesView from '../views/ExpensesView.vue';
 import BalancesView from '../views/BalancesView.vue';
+import QuickLaunchView from '../views/QuickLaunchView.vue';
 import SettingsView from '../views/SettingsView.vue';
 
 const router = createRouter({
@@ -41,6 +42,11 @@ const router = createRouter({
       path: '/settings',
       name: 'settings',
       component: SettingsView
+    },
+    {
+      path: '/quick',
+      name: 'quick',
+      component: QuickLaunchView
     }
   ]
 });
