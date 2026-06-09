@@ -3,6 +3,7 @@ import { useRoute } from 'vue-router';
 import { 
   Bars3Icon, 
   BanknotesIcon, 
+  BoltIcon,
   Cog6ToothIcon, 
   UserGroupIcon 
 } from '@heroicons/vue/24/solid';
@@ -57,6 +58,16 @@ function isActiveRoute(path: string): boolean {
       >
         <UserGroupIcon class="w-6 h-6" />
         <p class="text-xs">Grupos</p>
+      </router-link>
+      <router-link
+        to="/quick"
+        :class="[
+          'flex-1 py-3 px-3 flex flex-col items-center gap-1 border-t-2 transition',
+          isActiveRoute('/quick') ? 'border-emerald-700 text-emerald-700' : 'border-transparent text-gray-500 hover:text-gray-700'
+        ]"
+      >
+        <BoltIcon class="w-6 h-6" />
+        <p class="text-xs">Rápido</p>
       </router-link>
     </div>
   </nav>
