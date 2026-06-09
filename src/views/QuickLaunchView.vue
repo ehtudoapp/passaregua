@@ -24,6 +24,10 @@ interface MemberInput {
   error?: string;
 }
 
+const QUICK_LAUNCH_GROUP_ID = 'quick-launch';
+const PERCENTAGE_TOLERANCE = 1;
+const AMOUNT_TOLERANCE_CENTS = 1;
+
 const currentStep = ref<QuickStep>('members');
 const memberInputs = ref<MemberInput[]>([{ id: 1, name: '' }]);
 const nextMemberId = ref(2);
@@ -54,7 +58,7 @@ const divisionSummaryError = computed(() => {
 
   if (divisionType.value === 'percentage') {
     const total = Array.from(divisionDetails.value.values()).reduce((sum, item) => sum + item, 0);
-    if (Math.abs(total - 100) > 1) {
+    if (Math.abs(total - 100) > PERCENTAGE_TOLERANCE) {
       return 'A soma dos percentuais deve ser próxima de 100%.';
     }
   }
@@ -63,7 +67,7 @@ const divisionSummaryError = computed(() => {
     const total = Math.round(
       Array.from(divisionDetails.value.values()).reduce((sum, item) => sum + (item * 100), 0)
     );
-    if (Math.abs(total - totalAmount) > 1) {
+    if (Math.abs(total - totalAmount) > AMOUNT_TOLERANCE_CENTS) {
       return 'A soma dos valores deve ser próxima do total.';
     }
   }
@@ -196,7 +200,7 @@ function handleContinueToDivision() {
     .filter(name => name !== '')
     .map(name => ({
       id: generateUUID(),
-      group_id: 'quick-launch',
+      group_id: QUICK_LAUNCH_GROUP_ID,
       nome: name,
       lastModified: Date.now()
     }));
